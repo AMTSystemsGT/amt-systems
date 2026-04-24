@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="pl" xmlns:mso="urn:schemas-microsoft-com:office:office" xmlns:msdt="uuid:C2F41010-65B3-11d1-A29F-00AA00C14882">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AMT Systems — Kalkulator AI</title>
+<script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;font-size:14px;background:#f3f2f1;color:#323130;min-height:100vh}
+.header{background:#0078d4;color:white;padding:0 24px;height:48px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.header-left{display:flex;align-items:center;gap:16px}
+.header-logo{font-size:13px;font-weight:700;letter-spacing:1px;opacity:.7}
+.header-title{font-size:15px;font-weight:600}
+.header-right{display:flex;align-items:center;gap:12px;font-size:13px}
+.avatar{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px}
+.back-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:white;padding:4px 12px;border-radius:2px;font-size:12px;cursor:pointer;font-family:inherit}
+.back-btn:hover{background:rgba(255,255,255,.25)}
+.container{max-width:960px;margin:0 auto;padding:24px 16px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.card{background:white;border:1px solid #edebe9;border-radius:4px;padding:24px}
+.card-title{font-size:15px;font-weight:700;color:#0078d4;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #f3f2f1;display:flex;align-items:center;gap:8px}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:14px}
+.field label{font-size:12px;font-weight:600;color:#605e5c;text-transform:uppercase;letter-spacing:.3px}
+.field textarea,.field select{border:1px solid #8a8886;border-radius:2px;padding:8px 10px;font-size:14px;font-family:inherit;color:#323130;background:white;resize:vertical}
+.field textarea{min-height:130px}
+.field textarea:focus,.field select:focus{outline:none;border-color:#0078d4;box-shadow:0 0 0 1px #0078d4}
+.upload-zone{border:2px dashed #0078d4;border-radius:4px;padding:20px;text-align:center;cursor:pointer;background:#f0f6ff;transition:all .15s;margin-bottom:14px}
+.upload-zone:hover{background:#e0edff}
+.upload-zone.has-file{border-color:#107c10;background:#f0fff0;border-style:solid}
+.btn-analyze{width:100%;padding:12px;background:#0078d4;color:white;border:none;border-radius:2px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .15s}
+.btn-analyze:hover{background:#106ebe}
+.btn-analyze:disabled{background:#c8c6c4;cursor:not-allowed}
+.btn-secondary{padding:7px 14px;background:white;color:#0078d4;border:1px solid #0078d4;border-radius:2px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-secondary:hover{background:#f0f6ff}
+.btn-danger{padding:6px 12px;background:white;color:#a4262c;border:1px solid #a4262c;border-radius:2px;font-size:12px;cursor:pointer;font-family:inherit}
+.status{padding:10px 14px;border-radius:4px;font-size:13px;margin-bottom:16px;display:none;align-items:center;gap:8px}
+.status.show{display:flex}
+.status-loading{background:#e8f4f8;border:1px solid #0078d4;color:#0050b3}
+.status-error{background:#fde7e9;border:1px solid #a4262c;color:#a4262c}
+.status-success{background:#dff6dd;border:1px solid #107c10;color:#107c10}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:16px;height:16px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
+.variants{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px}
+.variant{border-radius:4px;padding:14px;text-align:center;border:2px solid transparent}
+.variant-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.variant-price{font-size:22px;font-weight:700;margin-bottom:3px}
+.variant-note{font-size:11px;opacity:.8}
+.variant-min{background:#fff4e5;border-color:#f7d08a;color:#8a4b00}
+.variant-target{background:#dce8ff;border-color:#0078d4;color:#004578}
+.variant-premium{background:#f3e9ff;border-color:#8764b8;color:#4b1f8d}
+.hours-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.hours-card{background:#f3f2f1;border-radius:4px;padding:12px 14px}
+.hours-name{font-size:11px;font-weight:700;text-transform:uppercase;color:#605e5c;margin-bottom:4px}
+.hours-val{font-size:20px;font-weight:700;color:#323130}
+.hours-cost{font-size:12px;color:#605e5c;margin-top:2px}
+.result-section{margin-bottom:14px}
+.result-label{font-size:11px;font-weight:700;text-transform:uppercase;color:#605e5c;letter-spacing:.3px;margin-bottom:6px}
+.result-text{font-size:13px;line-height:1.6;color:#323130;background:#f3f2f1;padding:10px 12px;border-radius:2px}
+.tag-list{display:flex;flex-wrap:wrap;gap:6px}
+.tag{padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600}
+.tag-risk{background:#fde7e9;color:#a4262c}
+.tag-question{background:#e8f4f8;color:#005a9e}
+.tag-missing{background:#fff4e5;color:#8a4b00}
+.copy-area{position:relative}
+.copy-btn{position:absolute;top:6px;right:6px;background:#0078d4;color:white;border:none;border-radius:2px;padding:3px 8px;font-size:11px;cursor:pointer;font-family:inherit}
+.copy-btn:hover{background:#106ebe}
+.history-item{padding:10px 12px;border-bottom:1px solid #edebe9;cursor:pointer;transition:background .1s}
+.history-item:hover{background:#f3f2f1}
+.history-item:last-child{border-bottom:none}
+.history-item-title{font-size:13px;font-weight:600}
+.history-item-meta{font-size:11px;color:#605e5c;margin-top:2px}
+.login-screen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:white;position:fixed;top:0;left:0;width:100%;z-index:9999}
+.login-screen.show{display:flex}
+#resultSection{display:none}
+#resultSection.show{display:block}
+@media(max-width:700px){.grid{grid-template-columns:1fr}.variants{grid-template-columns:1fr}.hours-grid{grid-template-columns:1fr}}
+</style>
+
+<!--[if gte mso 9]><xml>
+<mso:CustomDocumentProperties>
+<mso:_ApprovalStatus msdt:dt="string">0</mso:_ApprovalStatus>
+<mso:_ApprovalAssignedTo msdt:dt="string"></mso:_ApprovalAssignedTo>
+<mso:_ApprovalRespondedBy msdt:dt="string"></mso:_ApprovalRespondedBy>
+<mso:_ApprovalSentBy msdt:dt="string"></mso:_ApprovalSentBy>
+</mso:CustomDocumentProperties>
+</xml><![endif]-->
+</head>
+<body>
+
+<div class="login-screen show" id="loginScreen">
+  <div style="font-size:48px;margin-bottom:16px">📐</div>
+  <div style="font-size:24px;font-weight:700;color:#0078d4;margin-bottom:8px">AMT Systems</div>
+  <div style="font-size:14px;color:#605e5c;margin-bottom:32px">Kalkulator ofert AI — zaloguj się kontem Microsoft</div>
+  <button class="btn-analyze" style="width:auto;padding:12px 32px" onclick="doLogin()">Zaloguj się przez Microsoft</button>
+  <div style="margin-top:16px">
+    <button class="btn-secondary" onclick="showApp(true)">Tryb offline (bez logowania)</button>
+  </div>
+</div>
+
+<div id="app" style="display:none">
+
+<div class="header">
+  <div class="header-left">
+    <span class="header-logo">AMT</span>
+    <span class="header-title">Kalkulator ofert AI</span>
+  </div>
+  <div class="header-right">
+    <button class="back-btn" onclick="window.location.href='AMT_Dashboard.html'">&#8592; Dashboard</button>
+    <span id="userName">—</span>
+    <div class="avatar" id="userAvatar">?</div>
+  </div>
+</div>
+
+<div class="container">
+
+  <div id="statusBar" class="status"></div>
+
+  <div class="grid">
+    <!-- INPUT -->
+    <div>
+      <div class="card">
+        <div class="card-title"><span>📋</span> Zapytanie ofertowe</div>
+
+        <div class="field">
+          <label>Typ projektu (opcjonalnie)</label>
+          <select id="projectType">
+            <option value="">— wybierz typ —</option>
+            <option value="Przyłącze wod-kan (dom jednorodzinny)">Przyłącze wod-kan — dom jednorodzinny</option>
+            <option value="Przyłącze wod-kan (budynek wielorodzinny)">Przyłącze wod-kan — budynek wielorodzinny</option>
+            <option value="Sieć wod-kan (do 500m)">Sieć wod-kan — do 500m</option>
+            <option value="Sieć wod-kan (powyżej 500m)">Sieć wod-kan — powyżej 500m</option>
+            <option value="Przyłącze gazowe">Przyłącze gazowe</option>
+            <option value="Instalacja gazowa wewnętrzna">Instalacja gazowa wewnętrzna</option>
+            <option value="Sieć cieplna">Sieć cieplna</option>
+            <option value="Węzeł cieplny">Węzeł cieplny</option>
+            <option value="PFU">PFU — Program Funkcjonalno-Użytkowy</option>
+            <option value="Nadzór autorski">Nadzór autorski</option>
+            <option value="Kolizje infrastrukturalne">Kolizje przy drogach/torowiskach</option>
+            <option value="Inny/Specjalny">Inny / Specjalny</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Treść zapytania (mail, notatka, opis)</label>
+          <textarea id="queryText" placeholder="Wklej treść maila od klienta lub opisz zakres projektu...&#10;&#10;Przykład: Klient prosi o wycenę projektu przyłącza wod-kan dla nowego domu jednorodzinnego w Katowicach, działka 800m2, odległość od sieci ok. 30m..."></textarea>
+        </div>
+
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('pdfInput').click()">
+          <div style="font-size:28px;margin-bottom:6px">📄</div>
+          <div style="font-size:13px;color:#605e5c">Załącz PDF z warunkami technicznymi</div>
+          <div style="font-size:11px;color:#a19f9d;margin-top:4px">Kliknij lub przeciągnij plik PDF</div>
+          <div id="uploadFilename" style="display:none;font-size:12px;color:#107c10;font-weight:600;margin-top:6px"></div>
+        </div>
+        <input type="file" id="pdfInput" accept=".pdf" style="display:none" onchange="handlePDF(this)">
+
+        <button class="btn-analyze" id="analyzeBtn" onclick="analyze()">
+          <span>🤖</span> Analizuj i wyceniaj
+        </button>
+
+        <div style="margin-top:10px;text-align:center">
+          <button class="btn-danger" onclick="resetForm()">Wyczyść formularz</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- WYNIK -->
+    <div>
+      <div id="resultSection">
+        <div class="card">
+          <div class="card-title"><span>💰</span> Wycena projektu</div>
+
+          <div class="variants">
+            <div class="variant variant-min">
+              <div class="variant-label">Minimalny</div>
+              <div class="variant-price" id="priceMin">—</div>
+              <div class="variant-note">marża 15%</div>
+            </div>
+            <div class="variant variant-target">
+              <div class="variant-label">⭐ Docelowy</div>
+              <div class="variant-price" id="priceTarget">—</div>
+              <div class="variant-note">marża 30%</div>
+            </div>
+            <div class="variant variant-premium">
+              <div class="variant-label">Premium</div>
+              <div class="variant-price" id="pricePremium">—</div>
+              <div class="variant-note">marża 40%</div>
+            </div>
+          </div>
+
+          <div class="hours-grid">
+            <div class="hours-card">
+              <div class="hours-name">GT (Grzegorz)</div>
+              <div class="hours-val"><span id="hoursGT">—</span> h</div>
+              <div class="hours-cost" id="costGT">250 zł/h</div>
+            </div>
+            <div class="hours-card">
+              <div class="hours-name">Daniel</div>
+              <div class="hours-val"><span id="hoursDaniel">—</span> h</div>
+              <div class="hours-cost" id="costDaniel">140 zł/h</div>
+            </div>
+          </div>
+
+          <div class="result-section">
+            <div class="result-label">Typ i zakres projektu</div>
+            <div class="result-text" id="resultScope">—</div>
+          </div>
+
+          <div class="result-section">
+            <div class="result-label">Gotowy tekst do oferty</div>
+            <div class="copy-area">
+              <div class="result-text" id="resultOffer" style="padding-right:64px">—</div>
+              <button class="copy-btn" onclick="copyOffer()">Kopiuj</button>
+            </div>
+          </div>
+
+          <div class="result-section" id="questionsSection">
+            <div class="result-label">Pytania do klienta</div>
+            <div class="tag-list" id="resultQuestions"></div>
+          </div>
+
+          <div class="result-section" id="risksSection">
+            <div class="result-label">Ryzyka</div>
+            <div class="tag-list" id="resultRisks"></div>
+          </div>
+
+          <div class="result-section" id="missingSection">
+            <div class="result-label">Brakujące informacje</div>
+            <div class="tag-list" id="resultMissing"></div>
+          </div>
+
+          <div style="margin-top:16px;padding-top:14px;border-top:1px solid #edebe9;display:flex;gap:8px;justify-content:flex-end">
+            <button class="btn-secondary" onclick="saveToHistory()">💾 Zapisz</button>
+            <button class="btn-secondary" onclick="copyAll()">📋 Kopiuj całość</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="placeholder" class="card" style="text-align:center;padding:48px 24px;color:#a19f9d">
+        <div style="font-size:48px;margin-bottom:16px">🤖</div>
+        <div style="font-size:15px;font-weight:600;margin-bottom:8px">Wycena pojawi się tutaj</div>
+        <div style="font-size:13px">Opisz projekt lub wklej PDF<br>i kliknij "Analizuj i wyceniaj"</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORIA -->
+  <div class="card" style="margin-top:20px">
+    <div class="card-title" style="cursor:pointer;margin-bottom:0" onclick="toggleHistory()">
+      <span>🕐</span> Historia wycen
+      <span id="historyToggle" style="margin-left:auto;font-size:12px;font-weight:400;color:#605e5c">▼ pokaż</span>
+    </div>
+    <div id="historyList" style="display:none;margin-top:16px">
+      <div id="historyEmpty" style="padding:16px;text-align:center;color:#a19f9d;font-size:13px">Brak zapisanych wycen</div>
+      <div id="historyItems"></div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+const AZURE_FUNCTION_URL = 'https://amt-claude-proxy-gzg9bbg7gffja6gc.polandcentral-01.azurewebsites.net/api/claudeProxy';
+
+const MSAL_CONFIG = {
+  auth: {
+    clientId: '04b07795-8ddb-461a-bbee-02f9e1bf7b46',
+    authority: 'https://login.microsoftonline.com/common',
+    redirectUri: window.location.href.split('?')[0]
+  },
+  cache: { cacheLocation: 'sessionStorage' }
+};
+
+let msalInstance = null;
+let currentAccount = null;
+let pdfBase64 = null;
+let pdfName = null;
+let historyData = [];
+
+async function initMSAL() {
+  try {
+    msalInstance = new msal.PublicClientApplication(MSAL_CONFIG);
+    await msalInstance.initialize();
+    const resp = await msalInstance.handleRedirectPromise();
+    if (resp) currentAccount = resp.account;
+    else {
+      const accounts = msalInstance.getAllAccounts();
+      if (accounts.length > 0) currentAccount = accounts[0];
+    }
+    if (currentAccount) showApp(false);
+    else document.getElementById('loginScreen').classList.add('show');
+  } catch(e) {
+    document.getElementById('loginScreen').classList.add('show');
+  }
+}
+
+async function doLogin() {
+  try {
+    if (!msalInstance) { showApp(true); return; }
+    await msalInstance.loginRedirect({ scopes: ['User.Read'] });
+  } catch(e) { showApp(true); }
+}
+
+function showApp(offline) {
+  document.getElementById('loginScreen').classList.remove('show');
+  document.getElementById('app').style.display = 'block';
+  if (currentAccount) {
+    const name = currentAccount.name || currentAccount.username;
+    document.getElementById('userName').textContent = name.split(' ')[0];
+    const initials = name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
+    document.getElementById('userAvatar').textContent = initials;
+  } else {
+    document.getElementById('userName').textContent = offline ? 'Offline' : '';
+    document.getElementById('userAvatar').textContent = 'GT';
+  }
+  loadHistory();
+}
+
+function handlePDF(input) {
+  const file = input.files[0];
+  if (!file) return;
+  pdfName = file.name;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    pdfBase64 = e.target.result.split(',')[1];
+    document.getElementById('uploadZone').classList.add('has-file');
+    document.getElementById('uploadFilename').style.display = 'block';
+    document.getElementById('uploadFilename').textContent = '✓ ' + pdfName;
+  };
+  reader.readAsDataURL(file);
+}
+
+// Drag & drop
+window.addEventListener('DOMContentLoaded', function() {
+  const zone = document.getElementById('uploadZone');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.background='#e0edff'; });
+  zone.addEventListener('dragleave', () => { zone.style.background = pdfBase64 ? '#f0fff0' : '#f0f6ff'; });
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file && file.type === 'application/pdf') {
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      document.getElementById('pdfInput').files = dt.files;
+      handlePDF(document.getElementById('pdfInput'));
+    }
+  });
+  initMSAL();
+});
+
+async function analyze() {
+  const text = document.getElementById('queryText').value.trim();
+  const type = document.getElementById('projectType').value;
+  if (!text && !pdfBase64) { showStatus('Wpisz treść zapytania lub załącz PDF.', 'error'); return; }
+
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Analizuję...';
+  showStatus('Claude analizuje zapytanie — chwila cierpliwości...', 'loading');
+
+  let message = type ? 'Typ projektu: ' + type + '\n\n' + text : text;
+  if (!message && pdfBase64) message = 'Przeanalizuj załączony dokument i przygotuj wycenę projektu.';
+
+  try {
+    const body = { message };
+    if (pdfBase64) { body.fileBase64 = pdfBase64; body.fileName = pdfName; }
+
+    const resp = await fetch(AZURE_FUNCTION_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    if (!resp.ok) throw new Error('Błąd serwera: ' + resp.status);
+    const data = await resp.json();
+
+    let wycena = null;
+    if (data.wycena) {
+      wycena = data.wycena;
+    } else if (data.raw) {
+      const clean = data.raw.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+      try { wycena = JSON.parse(clean); } catch(e) { throw new Error('Nie udało się przetworzyć odpowiedzi AI'); }
+    } else if (data.success && data.wycena) {
+      wycena = data.wycena;
+    }
+
+    if (!wycena) throw new Error('Brak danych wyceny w odpowiedzi');
+
+    renderResult(wycena, message);
+    showStatus('Wycena gotowa!', 'success');
+    setTimeout(hideStatus, 3000);
+  } catch(e) {
+    showStatus('Błąd: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span>🤖</span> Analizuj i wyceniaj';
+  }
+}
+
+function renderResult(data, query) {
+  const w = data.wycena || data;
+  const a = data.analiza || {};
+  const fmt = n => n ? Math.round(n/100)*100 + ' zł' : '—';
+
+  document.getElementById('priceMin').textContent = fmt(w.wariant_min);
+  document.getElementById('priceTarget').textContent = fmt(w.wariant_docelowy);
+  document.getElementById('pricePremium').textContent = fmt(w.wariant_premium);
+  document.getElementById('hoursGT').textContent = w.gt_godziny || '—';
+  document.getElementById('hoursDaniel').textContent = w.daniel_godziny || '—';
+  document.getElementById('costGT').textContent = (w.gt_godziny||0) + ' h × 250 zł = ' + (w.koszt_gt || (w.gt_godziny||0)*250) + ' zł';
+  document.getElementById('costDaniel').textContent = (w.daniel_godziny||0) + ' h × 140 zł = ' + (w.koszt_daniel || (w.daniel_godziny||0)*140) + ' zł';
+
+  const scope = [a.typ_projektu, a.lokalizacja, a.zakres_krotki].filter(Boolean).join(' | ');
+  document.getElementById('resultScope').textContent = scope || '—';
+  document.getElementById('resultOffer').textContent = data.oferta_sugestia || '—';
+
+  renderTags('resultQuestions', 'questionsSection', data.pytania_do_klienta, 'tag-question');
+  renderTags('resultRisks', 'risksSection', a.ryzyka, 'tag-risk');
+  renderTags('resultMissing', 'missingSection', a.brakujace_info, 'tag-missing');
+
+  document.getElementById('resultSection').classList.add('show');
+  document.getElementById('placeholder').style.display = 'none';
+  window._lastResult = { data, query, ts: new Date().toISOString() };
+}
+
+function renderTags(listId, sectionId, arr, cls) {
+  const el = document.getElementById(listId);
+  const section = document.getElementById(sectionId);
+  el.innerHTML = '';
+  if (!arr || !arr.length) { section.style.display='none'; return; }
+  section.style.display = 'block';
+  arr.forEach(t => {
+    const span = document.createElement('span');
+    span.className = 'tag ' + cls;
+    span.textContent = t;
+    el.appendChild(span);
+  });
+}
+
+function showStatus(msg, type) {
+  const el = document.getElementById('statusBar');
+  el.className = 'status show status-' + type;
+  el.innerHTML = (type==='loading' ? '<span class="spinner"></span>' : '') + '<span>' + msg + '</span>';
+}
+function hideStatus() { document.getElementById('statusBar').className = 'status'; }
+
+function resetForm() {
+  document.getElementById('queryText').value = '';
+  document.getElementById('projectType').value = '';
+  pdfBase64 = null; pdfName = null;
+  document.getElementById('uploadZone').classList.remove('has-file');
+  document.getElementById('uploadFilename').style.display = 'none';
+  document.getElementById('pdfInput').value = '';
+  document.getElementById('resultSection').classList.remove('show');
+  document.getElementById('placeholder').style.display = 'block';
+  hideStatus();
+}
+
+function copyOffer() {
+  navigator.clipboard.writeText(document.getElementById('resultOffer').textContent);
+  const btn = document.querySelector('.copy-btn');
+  btn.textContent = '✓ OK';
+  setTimeout(() => btn.textContent = 'Kopiuj', 2000);
+}
+
+function copyAll() {
+  if (!window._lastResult) return;
+  const d = window._lastResult.data;
+  const w = d.wycena || d;
+  const a = d.analiza || {};
+  const lines = [
+    'WYCENA AMT SYSTEMS — ' + new Date().toLocaleDateString('pl'),
+    '='.repeat(40),
+    'Projekt: ' + (a.typ_projektu||'—') + (a.lokalizacja ? ' — ' + a.lokalizacja : ''),
+    '',
+    'Wariant min: ' + Math.round((w.wariant_min||0)/100)*100 + ' zł',
+    'Wariant docelowy: ' + Math.round((w.wariant_docelowy||0)/100)*100 + ' zł',
+    'Wariant premium: ' + Math.round((w.wariant_premium||0)/100)*100 + ' zł',
+    '',
+    'GT: ' + (w.gt_godziny||0) + ' h × 250 zł = ' + ((w.gt_godziny||0)*250) + ' zł',
+    'Daniel: ' + (w.daniel_godziny||0) + ' h × 140 zł = ' + ((w.daniel_godziny||0)*140) + ' zł',
+    '',
+    'TEKST DO OFERTY:', d.oferta_sugestia || '—',
+    '',
+    'PYTANIA DO KLIENTA:',
+    ...(d.pytania_do_klienta||[]).map((q,i)=>(i+1)+'. '+q)
+  ];
+  navigator.clipboard.writeText(lines.join('\n'));
+  showStatus('Skopiowano do schowka', 'success');
+  setTimeout(hideStatus, 2000);
+}
+
+function saveToHistory() {
+  if (!window._lastResult) return;
+  const { data, query, ts } = window._lastResult;
+  const a = data.analiza || {};
+  const w = data.wycena || data;
+  const item = {
+    id: Date.now(), ts,
+    typ: a.typ_projektu || 'Projekt',
+    lokalizacja: a.lokalizacja || '',
+    query: query.substring(0,80),
+    docelowy: w.wariant_docelowy,
+    data
+  };
+  historyData.unshift(item);
+  if (historyData.length > 20) historyData.pop();
+  try { localStorage.setItem('amt_kalkulator_history', JSON.stringify(historyData)); } catch(e) {}
+  loadHistory();
+  showStatus('Zapisano w historii', 'success');
+  setTimeout(hideStatus, 2000);
+}
+
+function loadHistory() {
+  try { historyData = JSON.parse(localStorage.getItem('amt_kalkulator_history') || '[]'); } catch(e) { historyData = []; }
+  const container = document.getElementById('historyItems');
+  const empty = document.getElementById('historyEmpty');
+  container.innerHTML = '';
+  if (!historyData.length) { empty.style.display='block'; return; }
+  empty.style.display = 'none';
+  historyData.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'history-item';
+    div.innerHTML = '<div class="history-item-title">' + item.typ + (item.lokalizacja ? ' — ' + item.lokalizacja : '') + '</div>' +
+      '<div class="history-item-meta">' + new Date(item.ts).toLocaleString('pl') + ' | Docelowo: <strong>' + (item.docelowy ? Math.round(item.docelowy/100)*100 + ' zł' : '—') + '</strong></div>';
+    div.onclick = () => {
+      window._lastResult = { data: item.data, query: item.query, ts: item.ts };
+      renderResult(item.data, item.query);
+      window.scrollTo(0,0);
+    };
+    container.appendChild(div);
+  });
+}
+
+function toggleHistory() {
+  const list = document.getElementById('historyList');
+  const toggle = document.getElementById('historyToggle');
+  const show = list.style.display === 'none';
+  list.style.display = show ? 'block' : 'none';
+  toggle.textContent = show ? '▲ ukryj' : '▼ pokaż';
+}
+</script>
+</body>
+</html>

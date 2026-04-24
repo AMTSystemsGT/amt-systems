@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pl" xmlns:mso="urn:schemas-microsoft-com:office:office" xmlns:msdt="uuid:C2F41010-65B3-11d1-A29F-00AA00C14882">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AMT Systems — Dashboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f3f2f1;color:#323130;min-height:100vh}
+.header{background:#0078d4;color:white;padding:0 24px;height:48px;display:flex;align-items:center;justify-content:space-between}
+.header-title{font-size:16px;font-weight:700;letter-spacing:.5px}
+.header-right{display:flex;align-items:center;gap:12px;font-size:13px}
+.avatar{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px}
+.container{max-width:1000px;margin:0 auto;padding:32px 16px}
+.welcome{margin-bottom:28px}
+.welcome h1{font-size:22px;font-weight:700;color:#0078d4;margin-bottom:4px}
+.welcome p{font-size:14px;color:#605e5c}
+.section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#605e5c;margin-bottom:14px;padding-bottom:6px;border-bottom:1px solid #edebe9}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:32px}
+.tile{background:white;border:1px solid #edebe9;border-radius:4px;padding:20px;cursor:pointer;transition:all .15s;text-decoration:none;color:inherit;display:block}
+.tile:hover{border-color:#0078d4;box-shadow:0 2px 8px rgba(0,120,212,.12);transform:translateY(-1px)}
+.tile.active:hover{border-color:#107c10}
+.tile.wip{opacity:.7;cursor:default}
+.tile.wip:hover{border-color:#edebe9;box-shadow:none;transform:none}
+.tile-icon{font-size:32px;margin-bottom:12px}
+.tile-name{font-size:14px;font-weight:700;color:#323130;margin-bottom:4px}
+.tile-desc{font-size:12px;color:#605e5c;line-height:1.4}
+.tile-status{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;margin-top:8px}
+.status-active{background:#dff6dd;color:#107c10}
+.status-wip{background:#fff4e5;color:#8a4b00}
+.status-plan{background:#f3f2f1;color:#605e5c}
+.date{font-size:12px;color:#a19f9d;text-align:center;margin-top:16px}
+@media(max-width:600px){.grid{grid-template-columns:1fr 1fr}}
+</style>
+
+<!--[if gte mso 9]><xml>
+<mso:CustomDocumentProperties>
+<mso:_ApprovalStatus msdt:dt="string">0</mso:_ApprovalStatus>
+<mso:_ApprovalAssignedTo msdt:dt="string"></mso:_ApprovalAssignedTo>
+<mso:_ApprovalRespondedBy msdt:dt="string"></mso:_ApprovalRespondedBy>
+</mso:CustomDocumentProperties>
+</xml><![endif]-->
+</head>
+<body>
+
+<div class="header">
+  <span class="header-title">AMT Systems</span>
+  <div class="header-right">
+    <span id="userName">—</span>
+    <div class="avatar" id="userAvatar">GT</div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="welcome">
+    <h1>System zarządzania firmą</h1>
+    <p>AMT Systems Sp. z o.o. — Łaziska Górne</p>
+  </div>
+
+  <div class="section-title">Aktywne moduły</div>
+  <div class="grid">
+
+    <a class="tile active" href="AMT_Kalkulator_AI.html">
+      <div class="tile-icon">🤖</div>
+      <div class="tile-name">Kalkulator AI</div>
+      <div class="tile-desc">Wycena ofert z Claude AI — analiza PDF i zapytań</div>
+      <div class="tile-status status-active">✓ Działa</div>
+    </a>
+
+    <a class="tile active" href="AMT_Rejestr_Korespondencji.html">
+      <div class="tile-icon">📬</div>
+      <div class="tile-name">Obieg dokumentów</div>
+      <div class="tile-desc">Korespondencja, administracja, faktury</div>
+      <div class="tile-status status-active">✓ Działa</div>
+    </a>
+
+  </div>
+
+  <div class="section-title">W budowie</div>
+  <div class="grid">
+
+    <div class="tile wip">
+      <div class="tile-icon">📁</div>
+      <div class="tile-name">Projekty</div>
+      <div class="tile-desc">Lista projektów, statusy, witryny Teams</div>
+      <div class="tile-status status-wip">W budowie</div>
+    </div>
+
+    <div class="tile wip">
+      <div class="tile-icon">📊</div>
+      <div class="tile-name">Raporty</div>
+      <div class="tile-desc">Power BI — statusy, koszty, opóźnienia</div>
+      <div class="tile-status status-plan">Planowane</div>
+    </div>
+
+    <div class="tile wip">
+      <div class="tile-icon">💼</div>
+      <div class="tile-name">Finanse</div>
+      <div class="tile-desc">Faktury, rentowność projektów</div>
+      <div class="tile-status status-plan">Planowane</div>
+    </div>
+
+    <div class="tile wip">
+      <div class="tile-icon">👥</div>
+      <div class="tile-name">Kadry</div>
+      <div class="tile-desc">Zespół, czas pracy, zadania</div>
+      <div class="tile-status status-plan">Planowane</div>
+    </div>
+
+    <div class="tile wip">
+      <div class="tile-icon">📝</div>
+      <div class="tile-name">Generowanie dokumentów</div>
+      <div class="tile-desc">Pisma, protokoły, opisy techniczne</div>
+      <div class="tile-status status-plan">Planowane</div>
+    </div>
+
+    <div class="tile wip">
+      <div class="tile-icon">🗂️</div>
+      <div class="tile-name">Archiwum</div>
+      <div class="tile-desc">Archiwizacja zakończonych projektów</div>
+      <div class="tile-status status-plan">Planowane</div>
+    </div>
+
+  </div>
+
+  <div class="date" id="dateDisplay"></div>
+</div>
+
+<script>
+document.getElementById('dateDisplay').textContent = new Date().toLocaleDateString('pl', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+// Próba pobrania nazwy z sessionStorage (jeśli zalogowany przez inny moduł)
+try {
+  const acc = JSON.parse(sessionStorage.getItem('msal.account') || 'null');
+  if (acc && acc.name) {
+    document.getElementById('userName').textContent = acc.name.split(' ')[0];
+    document.getElementById('userAvatar').textContent = acc.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
+  }
+} catch(e) {}
+</script>
+</body>
+</html>
