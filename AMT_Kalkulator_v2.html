@@ -3,172 +3,129 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AMT Systems — Kalkulator projektów v2</title>
+<title>AMT Systems — Kalkulator projektów v2.2</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-:root {
-  --bg: #f5f4f0;
-  --surface: #ffffff;
-  --surface2: #f9f8f5;
-  --border: #e2e0d8;
-  --border2: #d0cec4;
-  --text: #1a1a18;
-  --text2: #5a5a52;
-  --text3: #9a9a8e;
-  --accent: #1e4d8c;
-  --accent-light: #e8eef8;
-  --green: #1a6b3a;
-  --green-light: #e6f4eb;
-  --amber: #8a5a00;
-  --amber-light: #fdf3e0;
-  --red: #8a1a1a;
-  --red-light: #fde8e8;
-  --orange: #8a4200;
-  --orange-light: #fdf0e0;
-  --radius: 6px;
-  --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
-}
-
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 13px; background: var(--bg); color: var(--text); min-height: 100vh; }
-
-/* HEADER */
-.top-bar { background: var(--accent); color: white; padding: 0 20px; height: 44px; display: flex; align-items: center; justify-content: space-between; }
-.top-bar-title { font-size: 14px; font-weight: 600; letter-spacing: .3px; }
-.top-bar-sub { font-size: 11px; opacity: .65; }
-.top-bar-right { display: flex; align-items: center; gap: 10px; font-size: 12px; opacity: .8; }
-
-/* LAYOUT */
-.layout { display: grid; grid-template-columns: 420px 1fr; min-height: calc(100vh - 44px); }
-
-/* LEWA KOLUMNA — FORMULARZ */
-.form-col { background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; }
-.form-section { padding: 16px 20px; border-bottom: 1px solid var(--border); }
-.form-section:last-child { border-bottom: none; }
-.section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--text3); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
-.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-
-/* POLA */
-.field { margin-bottom: 10px; }
-.field label { display: block; font-size: 11px; font-weight: 600; color: var(--text2); margin-bottom: 3px; }
-.field input, .field select, .field textarea {
-  width: 100%; border: 1px solid var(--border2); border-radius: var(--radius);
-  padding: 7px 10px; font-size: 13px; font-family: inherit; color: var(--text);
-  background: var(--surface); transition: border-color .15s;
-}
-.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--accent); }
-.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.field-row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-
-/* TOGGLE */
-.toggle-group { display: flex; gap: 4px; }
-.toggle-btn { flex: 1; padding: 6px 8px; border: 1px solid var(--border2); border-radius: var(--radius); background: var(--surface2); color: var(--text2); font-size: 12px; font-family: inherit; cursor: pointer; text-align: center; transition: all .15s; }
-.toggle-btn:hover { border-color: var(--accent); color: var(--accent); }
-.toggle-btn.active { background: var(--accent); border-color: var(--accent); color: white; font-weight: 600; }
-
-/* CHECKBOX ITEMS */
-.check-group { display: flex; flex-wrap: wrap; gap: 6px; }
-.check-item { display: flex; align-items: center; gap: 5px; padding: 4px 8px; border: 1px solid var(--border2); border-radius: 12px; cursor: pointer; font-size: 12px; color: var(--text2); transition: all .15s; user-select: none; }
-.check-item:hover { border-color: var(--accent); color: var(--accent); }
-.check-item.active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); font-weight: 600; }
-.check-item input { display: none; }
-
-/* PRAWA KOLUMNA — WYNIKI */
-.result-col { padding: 20px; overflow-y: auto; }
-.result-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px; color: var(--text3); text-align: center; }
-.result-placeholder-icon { font-size: 40px; margin-bottom: 12px; opacity: .4; }
-
-/* KARTY WYNIKÓW */
-.result-cards { display: flex; flex-direction: column; gap: 14px; }
-
-.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
-.card-header { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-.card-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text2); }
-.card-body { padding: 14px 16px; }
-
-/* WARIANTY CENOWE */
-.price-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-.price-box { border-radius: var(--radius); padding: 12px; text-align: center; border: 1.5px solid; }
-.price-box-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; margin-bottom: 4px; }
-.price-box-value { font-size: 22px; font-weight: 700; margin-bottom: 2px; font-variant-numeric: tabular-nums; }
-.price-box-sub { font-size: 10px; opacity: .7; }
-.price-min { background: var(--amber-light); border-color: #e8c060; color: var(--amber); }
-.price-target { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
-.price-premium { background: #f0eaf8; border-color: #8b5cf6; color: #5b21b6; }
-
-/* MARŻA BADGE */
-.marza-badge { padding: 3px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }
-.marza-ok { background: var(--green-light); color: var(--green); }
-.marza-warn { background: var(--amber-light); color: var(--amber); }
-.marza-bad { background: var(--red-light); color: var(--red); }
-
-/* TABELA KOSZTÓW */
-.cost-table { width: 100%; border-collapse: collapse; }
-.cost-table th { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text3); text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--border); }
-.cost-table th:last-child, .cost-table td:last-child { text-align: right; }
-.cost-table td { padding: 5px 8px; font-size: 12px; border-bottom: 1px solid var(--border); }
-.cost-table tr:last-child td { border-bottom: none; }
-.cost-table .cat-row td { font-weight: 700; font-size: 11px; color: var(--text2); background: var(--surface2); text-transform: uppercase; letter-spacing: .3px; padding: 6px 8px; }
-.cost-table .total-row td { font-weight: 700; font-size: 13px; border-top: 2px solid var(--border2); }
-.cost-table .internal { color: var(--text3); font-size: 11px; }
-.cost-zero { color: var(--text3); }
-
-/* OSTRZEŻENIA */
-.alerts { display: flex; flex-direction: column; gap: 8px; }
-.alert { padding: 10px 14px; border-radius: var(--radius); border: 1px solid; display: flex; align-items: flex-start; gap: 8px; font-size: 12px; }
-.alert-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
-.alert-red { background: var(--red-light); border-color: #e8a0a0; color: var(--red); }
-.alert-amber { background: var(--amber-light); border-color: #e8c060; color: var(--amber); }
-.alert-orange { background: var(--orange-light); border-color: #e8a060; color: var(--orange); }
-.alert-blue { background: var(--accent-light); border-color: #a0b8e8; color: var(--accent); }
-
-/* BADGE */
-.badge { display: inline-block; padding: 2px 7px; border-radius: 10px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px; }
-.badge-small { background: var(--green-light); color: var(--green); }
-.badge-medium { background: var(--amber-light); color: var(--amber); }
-.badge-large { background: var(--red-light); color: var(--red); }
-.badge-approx { background: #f0eaf8; color: #5b21b6; }
-
-/* PODZIAŁ ROBOCIZNY */
-.role-bars { display: flex; flex-direction: column; gap: 8px; }
-.role-bar { display: grid; grid-template-columns: 160px 1fr 80px; align-items: center; gap: 8px; }
-.role-bar-label { font-size: 12px; font-weight: 600; }
-.role-bar-sub { font-size: 11px; color: var(--text3); }
-.role-bar-track { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
-.role-bar-fill { height: 100%; border-radius: 4px; transition: width .3s; }
-.bar-gt { background: var(--accent); }
-.bar-daniel { background: #1a6b3a; }
-.role-bar-value { font-size: 12px; font-weight: 700; text-align: right; }
-
-/* PRZYCISK */
-.btn-calc { width: 100%; padding: 11px; background: var(--accent); color: white; border: none; border-radius: var(--radius); font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background .15s; letter-spacing: .3px; }
-.btn-calc:hover { background: #163d70; }
-.btn-reset { padding: 7px 14px; background: transparent; color: var(--text2); border: 1px solid var(--border2); border-radius: var(--radius); font-size: 12px; cursor: pointer; font-family: inherit; }
-.btn-reset:hover { border-color: var(--red); color: var(--red); }
-
-/* DOJAZDY SUBFORM */
-.dojazd-form { background: var(--surface2); border-radius: var(--radius); border: 1px solid var(--border); padding: 10px 12px; margin-top: 6px; }
-.dojazd-form .field { margin-bottom: 6px; }
-.dojazd-form .field:last-child { margin-bottom: 0; }
-
-/* UZGODNIENIA SUBFORM */
-.uzgod-form { background: var(--surface2); border-radius: var(--radius); border: 1px solid var(--border); padding: 10px 12px; margin-top: 6px; }
-
-/* SEPARATOR */
-.sep { height: 1px; background: var(--border); margin: 10px 0; }
-
-/* INLINE ROW */
-.inline-row { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; }
-.inline-row span:first-child { color: var(--text2); }
-.inline-row span:last-child { font-weight: 600; }
-
-/* NOTA */
-.nota { font-size: 11px; color: var(--text3); margin-top: 4px; }
-
-@media (max-width: 800px) {
-  .layout { grid-template-columns: 1fr; }
-  .form-col { border-right: none; border-bottom: 1px solid var(--border); }
-  .price-grid { grid-template-columns: 1fr; }
-}
+:root{--bg:#f5f4f0;--s:#fff;--s2:#f9f8f5;--bd:#e2e0d8;--bd2:#d0cec4;--tx:#1a1a18;--tx2:#5a5a52;--tx3:#9a9a8e;--ac:#1e4d8c;--acl:#e8eef8;--gr:#1a6b3a;--grl:#e6f4eb;--am:#8a5a00;--aml:#fdf3e0;--rd:#8a1a1a;--rdl:#fde8e8;--or:#8a4200;--orl:#fdf0e0;--r:6px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(--bg);color:var(--tx);min-height:100vh}
+.topbar{background:var(--ac);color:#fff;padding:0 20px;height:44px;display:flex;align-items:center;justify-content:space-between}
+.topbar-t{font-size:14px;font-weight:600}
+.ver{font-size:10px;background:rgba(255,255,255,.2);padding:2px 6px;border-radius:8px;margin-left:8px}
+.topbar-sub{font-size:11px;opacity:.6;margin-left:6px}
+.layout{display:grid;grid-template-columns:460px 1fr;min-height:calc(100vh - 44px)}
+.fc{background:var(--s);border-right:1px solid var(--bd);overflow-y:auto}
+.fs{padding:14px 18px;border-bottom:1px solid var(--bd)}
+.sl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.sl::after{content:'';flex:1;height:1px;background:var(--bd)}
+.f{margin-bottom:9px}
+.f label{display:block;font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:3px}
+.f input,.f select,.f textarea{width:100%;border:1px solid var(--bd2);border-radius:var(--r);padding:7px 10px;font-size:13px;font-family:inherit;color:var(--tx);background:var(--s)}
+.f input:focus,.f select:focus,.f textarea:focus{outline:none;border-color:var(--ac)}
+.f textarea{resize:vertical;min-height:60px}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fr3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.tg{display:flex;gap:4px}
+.tb{flex:1;padding:6px 4px;border:1px solid var(--bd2);border-radius:var(--r);background:var(--s2);color:var(--tx2);font-size:12px;font-family:inherit;cursor:pointer;text-align:center;transition:all .15s;line-height:1.3}
+.tb:hover{border-color:var(--ac);color:var(--ac)}
+.tb.active{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:600}
+.cg{display:flex;flex-wrap:wrap;gap:5px}
+.ci{display:flex;align-items:center;gap:4px;padding:4px 8px;border:1px solid var(--bd2);border-radius:12px;cursor:pointer;font-size:12px;color:var(--tx2);transition:all .15s;user-select:none}
+.ci:hover{border-color:var(--ac);color:var(--ac)}
+.ci.active{background:var(--acl);border-color:var(--ac);color:var(--ac);font-weight:600}
+.ci input{display:none}
+/* usługi zewnętrzne */
+.ext-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--bd)}
+.ext-row:last-child{border-bottom:none}
+.ext-cb{width:16px;height:16px;cursor:pointer;flex-shrink:0;accent-color:var(--ac)}
+.ext-lbl{flex:1;font-size:12px;color:var(--tx2);cursor:pointer}
+.ext-lbl.on{color:var(--tx);font-weight:600}
+.ext-inp{width:110px;border:1px solid var(--bd2);border-radius:var(--r);padding:4px 8px;font-size:12px;font-family:inherit;text-align:right;background:var(--s2)}
+.ext-inp:focus{outline:none;border-color:var(--ac);background:var(--s)}
+.ext-inp:disabled{opacity:.35;cursor:not-allowed}
+.ext-unit{font-size:11px;color:var(--tx3);flex-shrink:0}
+/* wydruk */
+.print-row{display:grid;grid-template-columns:1fr 80px 80px;gap:6px;align-items:center;margin-bottom:6px;font-size:12px}
+.print-row label{color:var(--tx2)}
+.print-row input{border:1px solid var(--bd2);border-radius:var(--r);padding:4px 8px;font-size:12px;font-family:inherit;text-align:right}
+/* wyniki */
+.rc{padding:18px;overflow-y:auto}
+.rph{display:flex;flex-direction:column;align-items:center;justify-content:center;height:400px;color:var(--tx3);text-align:center}
+.rcards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--s);border:1px solid var(--bd);border-radius:var(--r);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.ch{padding:10px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
+.ct{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--tx2)}
+.cb{padding:12px 14px}
+.pg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.pb{border-radius:var(--r);padding:12px;text-align:center;border:1.5px solid}
+.pbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+.pbv{font-size:21px;font-weight:700;margin-bottom:2px}
+.pbs{font-size:10px;opacity:.7}
+.pmin{background:var(--aml);border-color:#e8c060;color:var(--am)}
+.ptgt{background:var(--acl);border-color:var(--ac);color:var(--ac)}
+.pprem{background:#f0eaf8;border-color:#8b5cf6;color:#5b21b6}
+/* wskaźniki */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kpi{background:var(--s2);border-radius:var(--r);padding:10px 12px;border:1px solid var(--bd)}
+.kpi-val{font-size:20px;font-weight:700;margin-bottom:2px}
+.kpi-lbl{font-size:11px;color:var(--tx2)}
+.status-ok{background:var(--grl);border:1px solid #90d4a8;border-radius:var(--r);padding:12px 14px;display:flex;align-items:center;gap:10px}
+.status-warn{background:var(--aml);border:1px solid #e8c060;border-radius:var(--r);padding:12px 14px;display:flex;align-items:center;gap:10px}
+.status-bad{background:var(--rdl);border:1px solid #e8a0a0;border-radius:var(--r);padding:12px 14px;display:flex;align-items:center;gap:10px}
+.status-icon{font-size:24px;flex-shrink:0}
+.status-msg{font-size:13px;font-weight:600}
+.status-sub{font-size:12px;margin-top:2px;opacity:.8}
+.ctbl{width:100%;border-collapse:collapse}
+.ctbl th{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);text-align:left;padding:4px 8px;border-bottom:1px solid var(--bd)}
+.ctbl th:last-child,.ctbl td:last-child{text-align:right}
+.ctbl td{padding:5px 8px;font-size:12px;border-bottom:1px solid var(--bd)}
+.ctbl tr:last-child td{border-bottom:none}
+.catr td{font-weight:700;font-size:10px;color:var(--tx2);background:var(--s2);text-transform:uppercase;padding:5px 8px}
+.totr td{font-weight:700;font-size:13px;border-top:2px solid var(--bd2)}
+.int{color:var(--tx3);font-size:11px}
+.alerts{display:flex;flex-direction:column;gap:6px}
+.al{padding:9px 12px;border-radius:var(--r);border:1px solid;display:flex;align-items:flex-start;gap:8px;font-size:12px}
+.al-red{background:var(--rdl);border-color:#e8a0a0;color:var(--rd)}
+.al-amber{background:var(--aml);border-color:#e8c060;color:var(--am)}
+.al-orange{background:var(--orl);border-color:#e8a060;color:var(--or)}
+.al-blue{background:var(--acl);border-color:#a0b8e8;color:var(--ac)}
+.badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase}
+.bs{background:var(--grl);color:var(--gr)}
+.bm{background:var(--aml);color:var(--am)}
+.bl{background:var(--rdl);color:var(--rd)}
+.mb{padding:3px 8px;border-radius:10px;font-size:11px;font-weight:700}
+.mok{background:var(--grl);color:var(--gr)}
+.mwarn{background:var(--aml);color:var(--am)}
+.mbad{background:var(--rdl);color:var(--rd)}
+.rbars{display:flex;flex-direction:column;gap:8px}
+.rbar{display:grid;grid-template-columns:160px 1fr 80px;align-items:center;gap:8px}
+.rbl{font-size:12px;font-weight:600}
+.rbs{font-size:11px;color:var(--tx3)}
+.rbt{height:8px;background:var(--bd);border-radius:4px;overflow:hidden}
+.rbf{height:100%;border-radius:4px}
+.bgt{background:var(--ac)}
+.bdan{background:var(--gr)}
+.rbv{font-size:12px;font-weight:700;text-align:right}
+.btn-calc{width:100%;padding:11px;background:var(--ac);color:#fff;border:none;border-radius:var(--r);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-calc:hover{background:#163d70}
+.btn-xl{padding:9px 16px;background:#1a6b3a;color:#fff;border:none;border-radius:var(--r);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-xl:hover{background:#145230}
+.btn-xl:disabled{background:#9a9a8e;cursor:not-allowed}
+.btn-reset{padding:7px 14px;background:transparent;color:var(--tx2);border:1px solid var(--bd2);border-radius:var(--r);font-size:12px;cursor:pointer;font-family:inherit}
+.btn-reset:hover{border-color:var(--rd);color:var(--rd)}
+.sf{background:var(--s2);border-radius:var(--r);border:1px solid var(--bd);padding:10px 12px;margin-top:6px}
+.sf .f{margin-bottom:6px}
+.sep{height:1px;background:var(--bd);margin:8px 0}
+.ir{display:flex;align-items:center;justify-content:space-between;padding:4px 0;font-size:12px}
+.ir span:first-child{color:var(--tx2)}
+.ir span:last-child{font-weight:600}
+.nota{font-size:11px;color:var(--tx3);margin-top:4px}
+.hint{font-size:11px;color:var(--tx3);margin-bottom:6px}
+.wybrana-cena{margin-top:10px;padding:10px 12px;background:var(--s2);border-radius:var(--r);border:1px solid var(--bd)}
+.wybrana-cena label{font-size:11px;font-weight:600;color:var(--tx2);display:block;margin-bottom:4px}
+.wybrana-row{display:flex;align-items:center;gap:8px}
+.wybrana-row select{flex:1}
+.wybrana-row input{width:130px}
 </style>
 
 <!--[if gte mso 9]><xml>
@@ -176,718 +133,783 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 13px; backgrou
 <mso:_ApprovalStatus msdt:dt="string">0</mso:_ApprovalStatus>
 <mso:_ApprovalAssignedTo msdt:dt="string"></mso:_ApprovalAssignedTo>
 <mso:_ApprovalRespondedBy msdt:dt="string"></mso:_ApprovalRespondedBy>
+<mso:_ApprovalSentBy msdt:dt="string"></mso:_ApprovalSentBy>
 </mso:CustomDocumentProperties>
 </xml><![endif]-->
 </head>
 <body>
-
-<div class="top-bar">
-  <div>
-    <span class="top-bar-title">AMT Systems — Kalkulator projektów</span>
-    <span class="top-bar-sub"> &nbsp;|&nbsp; Faza 1 — deterministyczny</span>
-  </div>
-  <div class="top-bar-right">
-    <span id="topStatus">Wypełnij formularz i kliknij Oblicz</span>
-  </div>
+<div class="topbar">
+  <div><span class="topbar-t">AMT Systems — Kalkulator projektów</span><span class="ver">v2.2</span><span class="topbar-sub">Faza 1.1</span></div>
+  <div id="topSt" style="font-size:12px;opacity:.8">Wypełnij i oblicz</div>
 </div>
-
 <div class="layout">
+<div class="fc">
 
-<!-- ════ LEWA KOLUMNA ════ -->
-<div class="form-col">
-
-  <!-- TYP PROJEKTU -->
-  <div class="form-section">
-    <div class="section-label">Typ projektu</div>
-    <div class="field">
-      <label>Rodzaj projektu *</label>
-      <select id="typProjektu" onchange="onTypChange()">
+  <!-- TYP -->
+  <div class="fs">
+    <div class="sl">Identyfikacja projektu</div>
+    <div class="fr">
+      <div class="f"><label>Nazwa / numer projektu</label><input type="text" id="nazwaProj" placeholder="np. OF/01/GT/04/2026"></div>
+      <div class="f"><label>Klient</label><input type="text" id="klient" placeholder="nazwa klienta"></div>
+    </div>
+    <div class="f">
+      <label>Typ projektu *</label>
+      <select id="typ">
         <option value="">— wybierz —</option>
-        <option value="przylacze_wodkan">Przyłącze wod-kan (dom jednorodzinny)</option>
-        <option value="przylacze_wodkan_bud">Przyłącze wod-kan (budynek wielorodzinny)</option>
-        <option value="siec_wodkan_200">Sieć wod-kan (do 200m)</option>
-        <option value="siec_wodkan_500">Sieć wod-kan (200–500m)</option>
-        <option value="siec_wodkan_duz">Sieć wod-kan (powyżej 500m)</option>
-        <option value="przylacze_gaz">Przyłącze gazowe (niskie ciśnienie)</option>
-        <option value="instalacja_gaz">Instalacja gazowa wewnętrzna</option>
-        <option value="odwodnienie">Odwodnienie terenu / retencja</option>
-        <option value="siec_cieplna">Sieć cieplna</option>
-        <option value="wezel_cieplny">Węzeł cieplny</option>
-        <option value="kolizja">Kolizja przy drodze / torowisku</option>
-        <option value="pfu">PFU — Program Funkcjonalno-Użytkowy</option>
-        <option value="nadzor">Nadzór autorski</option>
+        <optgroup label="Przyłącza">
+          <option value="p_wk">Przyłącze wod-kan</option>
+          <option value="p_gz">Przyłącze gazowe (niskie ciśnienie)</option>
+          <option value="i_gz">Instalacja gazowa wewnętrzna</option>
+        </optgroup>
+        <optgroup label="Sieci">
+          <option value="s_wk_200">Sieć wod-kan (do 200m)</option>
+          <option value="s_wk_500">Sieć wod-kan (200–500m)</option>
+          <option value="s_wk_big">Sieć wod-kan (500m+)</option>
+          <option value="s_ciep">Sieć cieplna</option>
+        </optgroup>
+        <optgroup label="Specjalistyczne">
+          <option value="wezel">Węzeł cieplny</option>
+          <option value="odwod">Odwodnienie / retencja</option>
+          <option value="kolizja">Kolizja (droga / torowisko)</option>
+          <option value="pfu">PFU</option>
+          <option value="nadzor">Nadzór autorski</option>
+        </optgroup>
       </select>
     </div>
-    <div class="field">
-      <label>Złożoność projektu</label>
-      <div class="toggle-group">
-        <button class="toggle-btn active" onclick="setToggle('zlozonosc', 'prosta', this)">Prosta</button>
-        <button class="toggle-btn" onclick="setToggle('zlozonosc', 'standard', this)">Standard</button>
-        <button class="toggle-btn" onclick="setToggle('zlozonosc', 'zlozony', this)">Złożona</button>
+    <div class="f">
+      <label>Złożoność</label>
+      <div class="tg">
+        <button class="tb active" onclick="sT('zloz','prosta',this)">Prosta</button>
+        <button class="tb" onclick="sT('zloz','standard',this)">Standard</button>
+        <button class="tb" onclick="sT('zloz','zlozony',this)">Złożona</button>
       </div>
     </div>
   </div>
 
   <!-- LOKALIZACJA -->
-  <div class="form-section">
-    <div class="section-label">Lokalizacja</div>
-    <div class="field">
-      <label>Miejscowość</label>
-      <input type="text" id="miejscowosc" placeholder="np. Katowice, ul. Testowa">
-    </div>
-    <div class="field">
+  <div class="fs">
+    <div class="sl">Lokalizacja i dojazd</div>
+    <div class="f"><label>Miejscowość</label><input type="text" id="miasto" placeholder="np. Katowice"></div>
+    <div class="f">
       <label>Strefa odległości *</label>
-      <div class="toggle-group">
-        <button class="toggle-btn active" onclick="setToggle('strefa', 'lokalna', this)">Lokalna<br><span style="font-size:10px;font-weight:400">do 50km</span></button>
-        <button class="toggle-btn" onclick="setToggle('strefa', 'regionalna', this)">Regionalna<br><span style="font-size:10px;font-weight:400">50–200km</span></button>
-        <button class="toggle-btn" onclick="setToggle('strefa', 'daleka', this)">Daleka<br><span style="font-size:10px;font-weight:400">200km+</span></button>
+      <div class="tg">
+        <button class="tb active" onclick="sT('strefa','lok',this);showD(false)">Lokalna<br><small>do 50km</small></button>
+        <button class="tb" onclick="sT('strefa','reg',this);showD(true)">Regionalna<br><small>50–200km</small></button>
+        <button class="tb" onclick="sT('strefa','dal',this);showD(true)">Daleka<br><small>200km+</small></button>
       </div>
     </div>
-    <div id="dojazdForm" class="dojazd-form" style="display:none">
-      <div class="field-row">
-        <div class="field">
-          <label>Odległość (km w jedną stronę)</label>
-          <input type="number" id="km" min="0" value="0" placeholder="km">
-        </div>
-        <div class="field">
-          <label>Liczba wizyt</label>
-          <input type="number" id="wizyty" min="0" value="1" placeholder="1">
-        </div>
+    <div id="dF" class="sf" style="display:none">
+      <div class="fr">
+        <div class="f"><label>Odległość (km, jedna strona)</label><input type="number" id="km" value="100" min="0"></div>
+        <div class="f"><label>Liczba wizyt</label><input type="number" id="wiz" value="2" min="1"></div>
       </div>
-      <div class="field-row">
-        <div class="field">
-          <label>Kto jedzie?</label>
-          <select id="ktoJedzie">
-            <option value="gt">GT (250 zł/h)</option>
-            <option value="daniel">Daniel (140 zł/h)</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Czas dojazdu (h, w jedną stronę)</label>
-          <input type="number" id="czasDojazdu" min="0" step="0.5" value="1" placeholder="h">
-        </div>
+      <div class="fr">
+        <div class="f"><label>Kto jedzie?</label><select id="kto"><option value="gt">GT — 250 zł/h</option><option value="dan">Daniel — 140 zł/h</option></select></div>
+        <div class="f"><label>Czas dojazdu (h, jedna strona)</label><input type="number" id="tDoj" value="1.5" step="0.5" min="0"></div>
       </div>
     </div>
   </div>
 
   <!-- DANE TECHNICZNE -->
-  <div class="form-section">
-    <div class="section-label">Dane techniczne</div>
-    <div class="field-row">
-      <div class="field">
-        <label>Długość sieci / przyłącza (m)</label>
-        <input type="number" id="dlugoscSieci" min="0" value="0" placeholder="0">
-      </div>
-      <div class="field">
-        <label>Liczba obiektów / działek</label>
-        <input type="number" id="liczbaObiektow" min="1" value="1" placeholder="1">
-      </div>
+  <div class="fs">
+    <div class="sl">Dane techniczne</div>
+    <div class="fr">
+      <div class="f"><label>Liczba obiektów / przyłączy</label><input type="number" id="nObj" value="1" min="1"></div>
+      <div class="f"><label>Długość sieci (m)</label><input type="number" id="dSiec" value="0" min="0"></div>
     </div>
-    <div class="field-row">
-      <div class="field">
-        <label>Liczba gestorów sieci</label>
-        <input type="number" id="liczbaGestorow" min="1" max="10" value="1" placeholder="1">
-      </div>
-      <div class="field">
-        <label>Pas drogowy?</label>
-        <div class="toggle-group">
-          <button class="toggle-btn active" onclick="setToggle('pasDrogowy', 'nie', this)">Nie</button>
-          <button class="toggle-btn" onclick="setToggle('pasDrogowy', 'tak', this)">Tak</button>
-        </div>
-      </div>
+    <div class="fr">
+      <div class="f"><label>Liczba gestorów sieci</label><input type="number" id="nGest" value="1" min="1" max="8"></div>
+      <div class="f"><label>Pas drogowy?</label><div class="tg"><button class="tb active" onclick="sT('pas','nie',this)">Nie</button><button class="tb" onclick="sT('pas','tak',this)">Tak</button></div></div>
+    </div>
+    <div class="f"><label>Typ obiektu</label>
+      <select id="tObj">
+        <option value="dj">Dom jednorodzinny</option>
+        <option value="wiel">Budynek wielorodzinny</option>
+        <option value="dew">Deweloperski</option>
+        <option value="usl">Usługowy / komercyjny</option>
+        <option value="infra">Droga / torowisko</option>
+        <option value="inne">Inne</option>
+      </select>
     </div>
   </div>
 
-  <!-- WARUNKI STARTOWE -->
-  <div class="form-section">
-    <div class="section-label">Warunki startowe</div>
-    <div class="field-row">
-      <div class="field">
-        <label>Warunki techniczne?</label>
-        <div class="toggle-group">
-          <button class="toggle-btn" onclick="setToggle('warunki', 'brak', this)">Brak</button>
-          <button class="toggle-btn active" onclick="setToggle('warunki', 'sa', this)">Są</button>
-        </div>
-      </div>
-      <div class="field">
-        <label>Mapa</label>
-        <select id="mapa">
-          <option value="brak">Brak — do zakupu</option>
-          <option value="zasadnicza">Zasadnicza — jest</option>
-          <option value="projektowa">Do celów proj. — jest</option>
-        </select>
-      </div>
+  <!-- WARUNKI -->
+  <div class="fs">
+    <div class="sl">Warunki startowe</div>
+    <div class="fr">
+      <div class="f"><label>Warunki techniczne?</label><div class="tg"><button class="tb" onclick="sT('wt','brak',this)">Brak</button><button class="tb active" onclick="sT('wt','sa',this)">Są</button></div></div>
+      <div class="f"><label>Strefa górnicza?</label><div class="tg"><button class="tb active" onclick="sT('gorn','nie',this)">Nie</button><button class="tb" onclick="sT('gorn','tak',this)">Tak</button></div></div>
     </div>
-    <div class="field-row">
-      <div class="field">
-        <label>Strefa górnicza?</label>
-        <div class="toggle-group">
-          <button class="toggle-btn active" onclick="setToggle('strefaGorn', 'nie', this)">Nie</button>
-          <button class="toggle-btn" onclick="setToggle('strefaGorn', 'tak', this)">Tak</button>
-        </div>
+    <div class="f"><label>ZUD (koordynacja uzbrojenia)?</label><div class="tg"><button class="tb" onclick="sT('zud','nie',this)">Nie</button><button class="tb active" onclick="sT('zud','tak',this)">Tak</button></div></div>
+  </div>
+
+  <!-- UZGODNIENIA -->
+  <div class="fs">
+    <div class="sl">Uzgodnienia branżowe</div>
+    <div class="tg" style="margin-bottom:6px">
+      <button class="tb active" onclick="sT('uzg','nie',this);document.getElementById('uzgF').style.display='none'">Nie ma</button>
+      <button class="tb" onclick="sT('uzg','tak',this);document.getElementById('uzgF').style.display='block'">Są</button>
+    </div>
+    <div id="uzgF" class="sf" style="display:none">
+      <div class="cg" id="branze" style="margin-bottom:8px">
+        <label class="ci" onclick="tC(this)"><input type="checkbox" value="gaz">Gaz (PSG)</label>
+        <label class="ci" onclick="tC(this)"><input type="checkbox" value="energ">Energetyka</label>
+        <label class="ci" onclick="tC(this)"><input type="checkbox" value="tele">Teletechnika</label>
+        <label class="ci" onclick="tC(this)"><input type="checkbox" value="ciep">Ciepło</label>
+        <label class="ci" onclick="tC(this)"><input type="checkbox" value="woda">Wod-kan</label>
+        <label class="ci" onclick="tC(this)"><input type="checkbox" value="ppoz">P.poż</label>
+        <label class="ci" onclick="tC(this)"><input type="checkbox" value="inne">Inne</label>
       </div>
-      <div class="field">
-        <label>Typ obiektu</label>
-        <select id="typObiektu">
-          <option value="dj">Dom jednorodzinny</option>
-          <option value="wielorodzinny">Budynek wielorodzinny</option>
-          <option value="deweloper">Deweloperski</option>
-          <option value="uslugowy">Usługowy / komercyjny</option>
-          <option value="droga">Droga / torowisko</option>
-          <option value="inne">Inne</option>
-        </select>
+      <div class="f" style="margin-bottom:6px">
+        <label>Trudność uzgodnień</label>
+        <div class="tg"><button class="tb active" onclick="sT('trud','pro',this)">Proste</button><button class="tb" onclick="sT('trud','sr',this)">Średnie</button><button class="tb" onclick="sT('trud','trud',this)">Trudne</button></div>
       </div>
+      <div class="f" style="margin-bottom:0"><label>Łączny koszt opłat uzgodnieniowych (zł)</label><input type="number" id="kUzg" value="0" min="0" placeholder="wpisz po zebraniu ofert"></div>
     </div>
   </div>
 
-  <!-- KOSZTY ZEWNĘTRZNE -->
-  <div class="form-section">
-    <div class="section-label">Koszty zewnętrzne i dodatkowe</div>
-    <div class="field">
-      <label>Uzgodnienia branżowe</label>
-      <div class="toggle-group" style="margin-bottom:6px">
-        <button class="toggle-btn active" onclick="setToggle('uzgod', 'nie', this); document.getElementById('uzgodForm').style.display='none'">Nie</button>
-        <button class="toggle-btn" onclick="setToggle('uzgod', 'tak', this); document.getElementById('uzgodForm').style.display='block'">Tak</button>
-      </div>
-      <div id="uzgodForm" class="uzgod-form" style="display:none">
-        <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">Wybierz branże:</div>
-        <div class="check-group" id="branzeGroup">
-          <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="gaz">Gaz (PSG)</label>
-          <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="energetyka">Energetyka</label>
-          <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="teletechnika">Teletechnika</label>
-          <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="cieplo">Ciepło</label>
-          <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="woda">Wod-kan</label>
-          <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="inne">Inne</label>
-        </div>
-        <div style="margin-top:8px">
-          <label style="font-size:11px;font-weight:600;color:var(--text2)">Trudność uzgodnień:</label>
-          <div class="toggle-group" style="margin-top:4px">
-            <button class="toggle-btn active" onclick="setToggle('trudnoscUzgod', 'prosta', this)">Proste</button>
-            <button class="toggle-btn" onclick="setToggle('trudnoscUzgod', 'srednia', this)">Średnie</button>
-            <button class="toggle-btn" onclick="setToggle('trudnoscUzgod', 'trudna', this)">Trudne</button>
-          </div>
-        </div>
+  <!-- USŁUGI ZEWNĘTRZNE -->
+  <div class="fs">
+    <div class="sl">Usługi zewnętrzne — podwykonawcy</div>
+    <div class="hint">Zaznacz co występuje → wpisz kwotę z oferty podwykonawcy</div>
+    <div id="extList"></div>
+  </div>
+
+  <!-- WYDRUK -->
+  <div class="fs">
+    <div class="sl">Koszty wydruku i kompletacji</div>
+    <div class="f">
+      <label>Tryb kalkulacji</label>
+      <div class="tg">
+        <button class="tb active" onclick="sT('druk','rycz',this);document.getElementById('drukRycz').style.display='block';document.getElementById('drukDet').style.display='none'">Ryczałt</button>
+        <button class="tb" onclick="sT('druk','det',this);document.getElementById('drukRycz').style.display='none';document.getElementById('drukDet').style.display='block'">Szczegółowo</button>
       </div>
     </div>
-    <div class="field">
-      <label>Opcje dodatkowe</label>
-      <div class="check-group">
-        <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="operat">Operat wodnoprawny</label>
-        <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="geologia">Geologia</label>
-        <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="kosztorys">Kosztorysant</label>
-        <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="por">Projekt org. ruchu (POR)</label>
-        <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="nadzor_aut">Nadzór autorski</label>
-        <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="kolizja_inf">Kolizje infrastrukturalne</label>
-      </div>
+    <div id="drukRycz">
+      <div class="f"><label>Łączny koszt wydruku / kompletacji (zł)</label><input type="number" id="drukTotal" value="0" min="0" placeholder="wpisz kwotę ryczałtową"></div>
+    </div>
+    <div id="drukDet" style="display:none">
+      <div style="font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:6px;display:grid;grid-template-columns:1fr 80px 80px;gap:6px"><span>Pozycja</span><span style="text-align:right">Ilość</span><span style="text-align:right">Cena jedn.</span></div>
+      <div class="print-row"><label>Wydruk A4 czarno-biały (str.)</label><input type="number" id="pA4bw" value="0" min="0"><input type="number" id="pA4bwC" value="0.30" step="0.05" min="0"></div>
+      <div class="print-row"><label>Wydruk A4 kolor (str.)</label><input type="number" id="pA4kol" value="0" min="0"><input type="number" id="pA4kolC" value="1.50" step="0.05" min="0"></div>
+      <div class="print-row"><label>Wydruk A3 (str.)</label><input type="number" id="pA3" value="0" min="0"><input type="number" id="pA3C" value="2.50" step="0.05" min="0"></div>
+      <div class="print-row"><label>Wydruk wielkoformatowy (szt.)</label><input type="number" id="pWF" value="0" min="0"><input type="number" id="pWFC" value="15.00" step="0.50" min="0"></div>
+      <div class="print-row"><label>Bindowanie / kompletacja (kpl.)</label><input type="number" id="pBind" value="0" min="0"><input type="number" id="pBindC" value="8.00" step="0.50" min="0"></div>
+      <div class="print-row"><label>Liczba egzemplarzy (mnożnik)</label><input type="number" id="pEgz" value="1" min="1"><span style="font-size:11px;color:var(--tx3);padding:4px 0">szt.</span></div>
+      <div class="print-row"><label>Wysyłka / kurier</label><input type="number" id="pKurier" value="0" min="0"><span></span></div>
+      <div class="print-row"><label>Skanowanie / nośnik</label><input type="number" id="pSkan" value="0" min="0"><span></span></div>
     </div>
   </div>
 
-  <!-- CENA I MARŻA -->
-  <div class="form-section">
-    <div class="section-label">Cena i marża</div>
-    <div class="field-row">
-      <div class="field">
-        <label>Marża docelowa (%)</label>
-        <input type="number" id="marzaTarget" min="0" max="100" value="30" placeholder="30">
-      </div>
-      <div class="field">
-        <label>Min. cena projektu (zł)</label>
-        <input type="number" id="minCena" min="0" value="2000" placeholder="2000">
-      </div>
+  <!-- CENA -->
+  <div class="fs">
+    <div class="sl">Cena i marża</div>
+    <div class="fr">
+      <div class="f"><label>Marża docelowa (%)</label><input type="number" id="marz" value="30" min="0" max="100"></div>
+      <div class="f"><label>Min. cena projektu (zł)</label><input type="number" id="minC" value="2000" min="0"></div>
     </div>
-    <div class="field">
-      <label>Cena ryczałtowa (zostaw 0 = licz automatycznie)</label>
-      <input type="number" id="ryczalt" min="0" value="0" placeholder="0 = auto">
-    </div>
+    <div class="f"><label>Cena ryczałtowa (0 = licz automatycznie)</label><input type="number" id="rycz" value="0" min="0"></div>
   </div>
 
   <!-- PRZYCISKI -->
-  <div class="form-section">
+  <div class="fs">
     <button class="btn-calc" onclick="oblicz()">⬤ Oblicz wycenę</button>
-    <div style="display:flex;justify-content:flex-end;margin-top:8px">
-      <button class="btn-reset" onclick="resetForm()">Wyczyść</button>
-    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn-reset" onclick="resetAll()">Wyczyść formularz</button></div>
   </div>
 
-</div><!-- /form-col -->
+</div><!-- /fc -->
 
-<!-- ════ PRAWA KOLUMNA ════ -->
-<div class="result-col">
-  <div id="placeholder" class="result-placeholder">
-    <div class="result-placeholder-icon">📐</div>
-    <div style="font-size:14px;font-weight:600;margin-bottom:6px">Kalkulator gotowy</div>
-    <div style="font-size:12px">Wypełnij formularz i kliknij "Oblicz wycenę"</div>
+<div class="rc">
+  <div id="ph" class="rph">
+    <div style="font-size:40px;opacity:.3;margin-bottom:12px">📐</div>
+    <div style="font-size:14px;font-weight:600;margin-bottom:6px">Kalkulator AMT v2.2</div>
+    <div style="font-size:12px">Faza 1.1 — wydruk, wskaźniki, eksport Excel</div>
   </div>
-  <div id="results" class="result-cards" style="display:none"></div>
+  <div id="res" class="rcards" style="display:none"></div>
+</div>
 </div>
 
-</div><!-- /layout -->
-
 <script>
-// ══════════════════════════════════════════════
-// DANE BAZOWE
-// ══════════════════════════════════════════════
-const STAWKA_GT = 250;
-const STAWKA_DANIEL = 140;
-const KOSZT_GT = 110;
-const KOSZT_DANIEL = 65;
-const STAWKA_KM = 1.2;
+// ══ DANE BAZOWE ══
+const SGT=250,SDAN=140,KGT=110,KDAN=65,SKM=1.2;
+const G={p_wk:[5,1],p_gz:[5,1],i_gz:[5,1],s_wk_200:[20,5],s_wk_500:[32,8],s_wk_big:[60,15],s_ciep:[32,14],wezel:[24,18],odwod:[18,6],kolizja:[36,12],pfu:[24,18],nadzor:[0,3]};
+const PRZEL=new Set(['p_wk','p_gz','i_gz']);
+const ADM={p_wk:[100,200],p_gz:[100,200],i_gz:[80,180],s_wk_200:[250,450],s_wk_500:[400,700],s_wk_big:[600,1000],s_ciep:[350,650],wezel:[200,400],odwod:[200,450],kolizja:[500,900],pfu:[150,350],nadzor:[0,0]};
 
-// Godziny bazowe per typ [daniel_min, daniel_max, gt_min, gt_max]
-const GODZINY = {
-  przylacze_wodkan:    [6, 8,  1, 2],
-  przylacze_wodkan_bud:[10,14, 2, 3],
-  siec_wodkan_200:     [16,24, 4, 6],
-  siec_wodkan_500:     [24,40, 6,10],
-  siec_wodkan_duz:     [40,60,10,16],
-  przylacze_gaz:       [6, 10, 1, 2],
-  instalacja_gaz:      [8, 16, 2, 3],
-  odwodnienie:         [12,20, 3, 5],
-  siec_cieplna:        [20,40, 6,10],
-  wezel_cieplny:       [20,36, 6,10],
-  kolizja:             [20,40, 6,12],
-  pfu:                 [16,32, 8,16],
-  nadzor:              [0,  0, 2, 4],
-};
+const EXT=[
+  {id:'mapa_z',lbl:'Mapa zasadnicza',kod:'K30',hD:0.5},
+  {id:'mapa_p',lbl:'Mapa do celów projektowych (geodeta)',kod:'K31',hD:1.5},
+  {id:'por',lbl:'Projekt organizacji ruchu (POR)',kod:'K34',hD:0},
+  {id:'operat',lbl:'Operat wodnoprawny',kod:'K35',hD:0},
+  {id:'decyz_sr',lbl:'Decyzje środowiskowe / KIP',kod:'K36',hD:0},
+  {id:'geo',lbl:'Badania geologiczne',kod:'K37',hD:0},
+  {id:'kosztor',lbl:'Kosztorysant',kod:'K32',hD:0},
+  {id:'podwyk',lbl:'Podwykonawca branżowy (elektryk, drogowiec...)',kod:'K33',hD:0},
+  {id:'ppoz',lbl:'Opinia rzeczoznawcy p.poż',kod:'K29',hD:0},
+  {id:'kurier',lbl:'Poczta / kurier projektowy',kod:'K39',hD:0},
+  {id:'inne_z',lbl:'Inne zewnętrzne',kod:'—',hD:0},
+];
 
-// Koszty administracyjne bazowe (K01-K04) per typ [min, max]
-const KOSZTY_ADMIN = {
-  przylacze_wodkan:    [200, 400],
-  przylacze_wodkan_bud:[300, 600],
-  siec_wodkan_200:     [400, 800],
-  siec_wodkan_500:     [600,1200],
-  siec_wodkan_duz:     [800,1600],
-  przylacze_gaz:       [150, 350],
-  instalacja_gaz:      [100, 300],
-  odwodnienie:         [300, 700],
-  siec_cieplna:        [400, 900],
-  wezel_cieplny:       [300, 700],
-  kolizja:             [600,1400],
-  pfu:                 [200, 500],
-  nadzor:              [0,   0  ],
-};
+function buildExt(){
+  document.getElementById('extList').innerHTML=EXT.map(e=>`
+    <div class="ext-row">
+      <input type="checkbox" class="ext-cb" id="ec_${e.id}" onchange="toggleExt('${e.id}',this.checked)">
+      <label class="ext-lbl" id="el_${e.id}" for="ec_${e.id}">${e.lbl} <span style="font-size:10px;color:var(--tx3)">${e.kod}</span></label>
+      <input type="number" class="ext-inp" id="ev_${e.id}" value="0" min="0" disabled>
+      <span class="ext-unit">zł</span>
+    </div>`).join('');
+}
+function toggleExt(id,on){
+  document.getElementById('ev_'+id).disabled=!on;
+  document.getElementById('el_'+id).classList.toggle('on',on);
+  if(on)document.getElementById('ev_'+id).focus();
+}
+function extVal(id){return parseFloat(document.getElementById('ev_'+id)?.value)||0}
+function extOn(id){const c=document.getElementById('ec_'+id);return c&&c.checked}
 
-// Mapa — typy
-const MAPA_TYP = {
-  przylacze_wodkan: 'zasadnicza', przylacze_wodkan_bud: 'zasadnicza',
-  przylacze_gaz: 'zasadnicza', instalacja_gaz: 'zasadnicza', nadzor: 'brak',
-  siec_wodkan_200: 'projektowa', siec_wodkan_500: 'projektowa', siec_wodkan_duz: 'projektowa',
-  odwodnienie: 'projektowa', siec_cieplna: 'projektowa', wezel_cieplny: 'projektowa',
-  kolizja: 'projektowa', pfu: 'projektowa',
-};
+const S={zloz:'prosta',strefa:'lok',pas:'nie',wt:'sa',gorn:'nie',zud:'tak',uzg:'nie',trud:'pro',druk:'rycz'};
+function sT(k,v,btn){S[k]=v;btn.closest('.tg').querySelectorAll('.tb').forEach(b=>b.classList.remove('active'));btn.classList.add('active')}
+function showD(s){document.getElementById('dF').style.display=s?'block':'none'}
+function tC(l){l.classList.toggle('active');l.querySelector('input').checked=l.classList.contains('active')}
+function gC(id){return[...document.querySelectorAll('#'+id+' input:checked')].map(i=>i.value)}
+const fmt=n=>Math.round(n).toLocaleString('pl-PL')+' zł';
+const fH=h=>h%1===0?h+' h':h.toFixed(1)+' h';
+const r100=n=>Math.round(n/100)*100;
+const gv=id=>parseFloat(document.getElementById(id)?.value)||0;
+const gi=id=>Math.max(1,parseInt(document.getElementById(id)?.value)||1);
 
-const MAPA_KOSZTY = { zasadnicza: [80, 150], projektowa: [1000, 2000], brak: [0, 0] };
-const MAPA_ROBOCIZNA = { zasadnicza: 1, projektowa: 2, brak: 0 }; // h Daniela
+let lastCalc=null;
 
-// Stan
-const state = {
-  zlozonosc: 'prosta', strefa: 'lokalna', pasDrogowy: 'nie',
-  warunki: 'sa', strefaGorn: 'nie', uzgod: 'nie',
-  trudnoscUzgod: 'prosta',
-};
-
-function setToggle(key, val, btn) {
-  state[key] = val;
-  const group = btn.closest('.toggle-group');
-  group.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  if (key === 'strefa') {
-    document.getElementById('dojazdForm').style.display = (val !== 'lokalna') ? 'block' : 'none';
-  }
+function calcDruk(){
+  if(S.druk==='rycz') return gv('drukTotal');
+  const egz=Math.max(1,gv('pEgz'));
+  return Math.round((
+    gv('pA4bw')*gv('pA4bwC')+
+    gv('pA4kol')*gv('pA4kolC')+
+    gv('pA3')*gv('pA3C')+
+    gv('pWF')*gv('pWFC')+
+    gv('pBind')*gv('pBindC')
+  )*egz + gv('pKurier') + gv('pSkan'));
 }
 
-function toggleCheck(label) {
-  label.classList.toggle('active');
-  label.querySelector('input').checked = label.classList.contains('active');
-}
-
-function getChecked(groupId) {
-  return Array.from(document.querySelectorAll(`#${groupId} input:checked`)).map(i => i.value);
-}
-
-function onTypChange() {
-  const typ = document.getElementById('typProjektu').value;
-  const mapaSug = MAPA_TYP[typ] || 'zasadnicza';
-  // Podpowiedz mapę jeśli nie jest ustawiona przez użytkownika
-  const mapaEl = document.getElementById('mapa');
-  if (mapaEl.value === 'brak' && mapaSug !== 'brak') {
-    // zostaw — user może zmienić
-  }
-}
-
-// ══════════════════════════════════════════════
-// GŁÓWNA KALKULACJA
-// ══════════════════════════════════════════════
-function oblicz() {
-  const typ = document.getElementById('typProjektu').value;
-  if (!typ) { alert('Wybierz typ projektu'); return; }
-
-  const zloz = state.zlozonosc;
-  const strefa = state.strefa;
-  const pasDrog = state.pasDrogowy === 'tak';
-  const brakWT = state.warunki === 'brak';
-  const strefaGorn = state.strefaGorn === 'tak';
-  const uzgodBranżowe = state.uzgod === 'tak';
-  const trudnoscUzgod = state.trudnoscUzgod;
-  const mapa = document.getElementById('mapa').value;
-  const dlugoscSieci = parseFloat(document.getElementById('dlugoscSieci').value) || 0;
-  const liczbaObiektow = parseInt(document.getElementById('liczbaObiektow').value) || 1;
-  const liczbaGestorow = parseInt(document.getElementById('liczbaGestorow').value) || 1;
-  const typObiektu = document.getElementById('typObiektu').value;
-  const marzaTarget = parseFloat(document.getElementById('marzaTarget').value) || 30;
-  const minCena = parseFloat(document.getElementById('minCena').value) || 2000;
-  const ryczalt = parseFloat(document.getElementById('ryczalt').value) || 0;
-  const branzeSelected = getChecked('branzeGroup');
-  const opcjeDodatkowe = getChecked('result-col') || [];
-  const opcje = Array.from(document.querySelectorAll('.check-group .check-item.active')).map(el => el.querySelector('input').value);
+function oblicz(){
+  const typ=document.getElementById('typ').value;
+  if(!typ){alert('Wybierz typ projektu');return}
+  const zloz=S.zloz,strefa=S.strefa,pas=S.pas==='tak',brakWT=S.wt==='brak';
+  const gorn=S.gorn==='tak',zud=S.zud==='tak',uzg=S.uzg==='tak',trud=S.trud;
+  const nObj=Math.max(1,gv('nObj')),dSiec=gv('dSiec'),nGest=Math.max(1,gv('nGest'));
+  const tObj=document.getElementById('tObj').value;
+  const marzP=gv('marz')||30,minC=gv('minC')||2000,rycz=gv('rycz');
+  const branze=gC('branze'),kUzgZewn=uzg?gv('kUzg'):0;
+  const nazwaProj=document.getElementById('nazwaProj').value||'—';
+  const klientN=document.getElementById('klient').value||'—';
+  const miasto=document.getElementById('miasto').value||'—';
 
   // Godziny bazowe
-  const g = GODZINY[typ] || [8, 12, 2, 4];
-  let danielH = (g[0] + g[1]) / 2;
-  let gtH = (g[2] + g[3]) / 2;
+  const g=G[typ]||[8,2];
+  let dH=g[0],gH=g[1];
+  const zm={prosta:0.85,standard:1.0,zlozony:1.3}[zloz]||1;
+  dH*=zm;gH*=zm;
+  const przel=PRZEL.has(typ);
+  if(przel&&nObj>1)dH+=(nObj-1)*1.5;
+  if(!przel){if(dSiec>500){dH*=1.2;gH*=1.15}else if(dSiec>200){dH*=1.1;gH*=1.05}}
+  if(tObj==='dew')dH*=1.15;
 
-  // Korekta złożoności
-  const zlozMnoznik = { prosta: 0.85, standard: 1.0, zlozony: 1.3 }[zloz] || 1.0;
-  danielH *= zlozMnoznik;
-  gtH *= zlozMnoznik;
+  let bWT_D=0,bWT_G=0;if(brakWT){bWT_D=1.5;bWT_G=0.5}
+  let oug_D=0,oug_G=0;if(gorn){oug_D=2;oug_G=1}
+  let uzgD=0,uzgG=0;
+  const tM={pro:1.0,sr:1.6,trud:2.5}[trud]||1;
+  if(uzg&&branze.length>0){uzgD=branze.length*2*tM;uzgG=branze.length*0.5*tM}
+  if(nGest>1){const d=(nGest-1)*1.2;uzgD+=d;uzgG+=d*0.25}
 
-  // Korekta liczby obiektów
-  if (liczbaObiektow > 1) {
-    const mnoznikObj = 1 + (liczbaObiektow - 1) * 0.5;
-    danielH *= mnoznikObj;
-    gtH *= Math.min(mnoznikObj, 1.5);
+  let hMapaD=0;
+  if(extOn('mapa_z'))hMapaD+=0.5;
+  if(extOn('mapa_p'))hMapaD+=1.5;
+
+  const dTot=Math.round((dH+bWT_D+oug_D+uzgD+hMapaD)*2)/2;
+  const gTot=Math.round((gH+bWT_G+oug_G+uzgG)*2)/2;
+  const totH=dTot+gTot;
+
+  const robSprzed=dTot*SDAN+gTot*SGT;
+  const robKoszt=dTot*KDAN+gTot*KGT;
+
+  // Admin
+  const adm=ADM[typ]||[150,300];
+  let kAdm=(adm[0]+adm[1])/2;
+  if(brakWT)kAdm+=150;if(gorn)kAdm+=250;
+  const kOplSk=typ==='nadzor'?0:80;
+  const kZUD=zud?200:0;
+  const kAdmin=kAdm+kOplSk+kZUD;
+
+  // Zewnętrzne
+  let kExtTotal=0;
+  const extItems=[];
+  EXT.forEach(e=>{if(extOn(e.id)){const v=extVal(e.id);if(v>0){extItems.push({lbl:e.lbl,kod:e.kod,kwota:v});kExtTotal+=v}}});
+  kExtTotal+=kUzgZewn;
+  if(kUzgZewn>0)extItems.unshift({lbl:'Uzgodnienia branżowe — opłaty',kod:'K24–K28',kwota:kUzgZewn});
+
+  // Dojazdy
+  let kDoj=0,dojOpis='';
+  if(strefa!=='lok'){
+    const km=gv('km'),wiz=Math.max(1,gv('wiz')),kto=document.getElementById('kto').value,tD=gv('tDoj');
+    const sOs=kto==='gt'?SGT:SDAN;
+    kDoj=(km*2*SKM+tD*2*sOs)*wiz;
+    dojOpis=`${km}km×2×${wiz}wiz + ${(tD*2).toFixed(1)}h×${sOs}zł×${wiz}wiz`;
   }
 
-  // Korekta długości sieci
-  if (dlugoscSieci > 500) { danielH *= 1.3; gtH *= 1.2; }
-  else if (dlugoscSieci > 200) { danielH *= 1.15; gtH *= 1.1; }
+  // Wydruk
+  const kDruk=calcDruk();
 
-  // Korekta deweloper
-  if (typObiektu === 'deweloper') { danielH *= 1.2; gtH *= 1.15; }
+  // Sumy
+  const kWewn=robKoszt+kAdmin+kExtTotal+kDoj+kDruk;
+  const baza=robSprzed+kAdmin+kExtTotal+kDoj+kDruk;
 
-  // Brak WT — dodaj czas
-  let hBrakWT_GT = 0, hBrakWT_D = 0;
-  if (brakWT) { hBrakWT_GT = 1.5; hBrakWT_D = 2; }
+  // Cena
+  let cMin,cDoel,cPrem;
+  if(rycz>0){cDoel=rycz;cMin=rycz*0.88;cPrem=rycz*1.2}
+  else{cMin=Math.max(baza/(1-0.15),minC);cDoel=Math.max(baza/(1-marzP/100),minC);cPrem=Math.max(baza/(1-0.40),minC)}
+  cMin=r100(cMin);cDoel=r100(cDoel);cPrem=r100(cPrem);
 
-  // Strefa górnicza
-  let hOUG_GT = 0, hOUG_D = 0;
-  if (strefaGorn) { hOUG_GT = 2; hOUG_D = 3; }
+  // Wskaźniki
+  const zysk=cDoel-kWewn;
+  const marzR=(cDoel-baza)/cDoel*100;
+  const narzut=kWewn>0?(cDoel-kWewn)/kWewn*100:0;
+  const zyskNaGtH=gTot>0?zysk/gTot:0;
+  const zyskNaTotH=totH>0?zysk/totH:0;
+  const udzGT=totH>0?gTot/totH*100:0;
+  const udzExt=cDoel>0?kExtTotal/cDoel*100:0;
 
-  // Pas drogowy
-  let hPasDrog_GT = 0, hPasDrog_D = 0;
-  if (pasDrog) { hPasDrog_GT = 2; hPasDrog_D = 4; }
+  // Status opłacalności
+  let statusClass,statusIcon,statusMsg,statusSub;
+  if(marzR>=30){statusClass='status-ok';statusIcon='🟢';statusMsg='Projekt opłacalny';statusSub=`Marża ${marzR.toFixed(1)}% — powyżej celu 30%`}
+  else if(marzR>=15){statusClass='status-warn';statusIcon='🟡';statusMsg='Projekt graniczny — wymaga podniesienia ceny';statusSub=`Marża ${marzR.toFixed(1)}% — poniżej celu 30%, powyżej minimum 15%`}
+  else{statusClass='status-bad';statusIcon='🔴';statusMsg='Projekt nieopłacalny — odrzuć albo zmień zakres/cenę';statusSub=`Marża ${marzR.toFixed(1)}% — poniżej minimum 15%`}
 
-  // Uzgodnienia branżowe
-  let hUzgod_GT = 0, hUzgod_D = 0;
-  const mnoznikTrudnosc = { prosta: 1.0, srednia: 1.5, trudna: 2.5 }[trudnoscUzgod] || 1.0;
-  if (uzgodBranżowe && branzeSelected.length > 0) {
-    hUzgod_D = branzeSelected.length * 2 * mnoznikTrudnosc;
-    hUzgod_GT = branzeSelected.length * 0.5 * mnoznikTrudnosc;
-  }
+  // Klasyfikacja
+  const klas=totH<=10?'s':totH<=40?'m':'l';
+  const klL={s:'MAŁY',m:'ŚREDNI',l:'DUŻY'}[klas];
+  const klC={s:'bs',m:'bm',l:'bl'}[klas];
 
-  // Gestorzy
-  if (liczbaGestorow > 1) {
-    const dod = (liczbaGestorow - 1) * 1.5;
-    hUzgod_D += dod;
-    hUzgod_GT += dod * 0.3;
-  }
+  // Ostrzeżenia
+  const aw=[];
+  if(cDoel<baza)aw.push({t:'red',i:'🚫',m:'PROJEKT STRATNY — cena nie pokrywa kosztów.'});
+  if(marzR<15&&cDoel>=baza)aw.push({t:'amber',i:'⚠️',m:`Marża ${marzR.toFixed(1)}% poniżej minimum 15%.`});
+  if(cDoel<minC)aw.push({t:'amber',i:'⚠️',m:`Cena ${fmt(cDoel)} poniżej progu minimalnego ${fmt(minC)}.`});
+  if(kDoj>0&&cDoel>0&&kDoj/cDoel>0.3)aw.push({t:'orange',i:'🚗',m:`Dojazdy (${fmt(kDoj)}) = ${(kDoj/cDoel*100).toFixed(0)}% wartości.`});
+  if(strefa==='dal')aw.push({t:'orange',i:'📍',m:'Projekt daleki 200km+ — zweryfikuj liczbę wizyt.'});
+  const extBezKwot=EXT.some(e=>extOn(e.id)&&extVal(e.id)===0);
+  if(extBezKwot)aw.push({t:'blue',i:'ℹ️',m:'Brakuje kwot usług zewnętrznych — wycena niepełna.'});
 
-  // Opcje dodatkowe — czas
-  let hNadzor_GT = 0;
-  if (opcje.includes('nadzor_aut')) { hNadzor_GT = 3; }
-  if (opcje.includes('kolizja_inf')) { danielH += 4; gtH += 2; }
+  const awStr=aw.map(a=>a.m).join(' | ')||'Brak';
 
-  // Finalne godziny
-  const danielTotal = Math.round((danielH + hBrakWT_D + hOUG_D + hPasDrog_D + hUzgod_D) * 2) / 2;
-  const gtTotal = Math.round((gtH + hBrakWT_GT + hOUG_GT + hPasDrog_GT + hUzgod_GT + hNadzor_GT) * 2) / 2;
+  // Reguły
+  const reg=[];
+  if(przel&&nObj>1)reg.push(`${nObj} obiekty → Daniel +${((nObj-1)*1.5).toFixed(1)}h`);
+  if(pas)reg.push('Pas drogowy — uwzględnij POR');
+  if(uzg&&branze.length)reg.push(`Uzgodnienia: ${branze.join(', ')}`);
+  if(gorn)reg.push('Strefa górnicza → OUG');
+  if(brakWT)reg.push('Brak WT → +czas');
+  if(nGest>1)reg.push(`${nGest} gestorów`);
+  if(strefa!=='lok')reg.push(`Strefa ${strefa} → dojazdy`);
+  if(tObj==='dew')reg.push('Deweloper +15%');
 
-  // ── ROBOCIZNA ──
-  const robociznaSprzedaz = danielTotal * STAWKA_DANIEL + gtTotal * STAWKA_GT;
-  const robociznaKoszt = danielTotal * KOSZT_DANIEL + gtTotal * KOSZT_GT;
+  // Zapisz do historii lokalnej
+  lastCalc={
+    data:new Date().toLocaleDateString('pl-PL'),
+    nazwaProj,klientN,typ,miasto,zloz,
+    gTot,dTot,
+    kGTwewn:Math.round(gTot*KGT),kDanwewn:Math.round(dTot*KDAN),
+    kGTsprzed:Math.round(gTot*SGT),kDansprzed:Math.round(dTot*SDAN),
+    kAdmin:Math.round(kAdmin),kExt:Math.round(kExtTotal),kDoj:Math.round(kDoj),kDruk:Math.round(kDruk),
+    kWewn:Math.round(kWewn),
+    cMin,cDoel,cPrem,cWybrana:cDoel,
+    zysk:Math.round(zysk),marzR:+marzR.toFixed(1),narzut:+narzut.toFixed(1),
+    zyskNaGtH:+zyskNaGtH.toFixed(0),zyskNaTotH:+zyskNaTotH.toFixed(0),
+    statusMsg,awStr,
+    dSiec,nObj,pas:S.pas,wt:S.wt,nGest,gorn:S.gorn,
+    uzg:uzg?branze.join(', '):'nie',
+    operat:extOn('operat')?'tak':'nie',
+    wizyty:strefa!=='lok'?gv('wiz'):0,
+  };
 
-  // ── KOSZTY ADMIN ──
-  const adm = KOSZTY_ADMIN[typ] || [200, 400];
-  let kosztAdmin = (adm[0] + adm[1]) / 2;
-  if (brakWT) kosztAdmin += 200;
-  if (strefaGorn) kosztAdmin += 300;
-  if (pasDrog) kosztAdmin += 400;
+  const gW=(gTot/(gTot+dTot+.01)*100).toFixed(0);
+  const dW=(dTot/(gTot+dTot+.01)*100).toFixed(0);
+  const mC=marzR>=30?'mok':marzR>=15?'mwarn':'mbad';
+  const extRows=extItems.map(i=>`<tr><td>${i.lbl}</td><td class="int">${i.kod}</td><td>${fmt(i.kwota)}</td></tr>`).join('');
 
-  // ── MAPA ──
-  const mapaSug = MAPA_TYP[typ] || 'zasadnicza';
-  const mapaUzywana = mapa === 'brak' ? mapaSug : 'brak'; // zakup mapy jeśli nie ma
-  let kosztMapa = 0, hMapaDaniel = 0;
-  if (mapa === 'brak') {
-    const mc = MAPA_KOSZTY[mapaSug];
-    kosztMapa = (mc[0] + mc[1]) / 2;
-    hMapaDaniel = MAPA_ROBOCIZNA[mapaSug];
-  }
-  const kosztMapaRobocizna = hMapaDaniel * STAWKA_DANIEL;
+  document.getElementById('ph').style.display='none';
+  document.getElementById('res').style.display='flex';
+  document.getElementById('topSt').textContent=`${nazwaProj} | ${fmt(cDoel)}`;
 
-  // ── PAS DROGOWY — POR ──
-  let kosztPOR = 0;
-  if (pasDrog || opcje.includes('por')) kosztPOR = 2500;
+  document.getElementById('res').innerHTML=`
 
-  // ── UZGODNIENIA — koszty zewnętrzne ──
-  let kosztUzgodZewn = 0;
-  if (uzgodBranżowe) kosztUzgodZewn = branzeSelected.length * 150;
+    ${aw.length?`<div class="card"><div class="ch"><span class="ct">Ostrzeżenia</span></div><div class="cb"><div class="alerts">${aw.map(a=>`<div class="al al-${a.t}"><span>${a.i}</span><span>${a.m}</span></div>`).join('')}</div></div></div>`:''}
 
-  // ── OPCJE DODATKOWE — koszty ──
-  let kosztOperat = opcje.includes('operat') ? 3000 : 0;
-  let kosztGeologia = opcje.includes('geologia') ? 4000 : 0;
-  let kosztKosztorys = opcje.includes('kosztorys') ? 1500 : 0;
-
-  // ── DOJAZDY ──
-  let kosztDojazd = 0;
-  let dojazdOpis = '';
-  if (strefa !== 'lokalna') {
-    const km = parseFloat(document.getElementById('km').value) || 0;
-    const wizyty = parseInt(document.getElementById('wizyty').value) || 1;
-    const ktoJedzie = document.getElementById('ktoJedzie').value;
-    const czasDojazdu = parseFloat(document.getElementById('czasDojazdu').value) || 1;
-    const stawkaOsoby = ktoJedzie === 'gt' ? STAWKA_GT : STAWKA_DANIEL;
-    const kosztKm = km * 2 * STAWKA_KM;
-    const kosztCzas = czasDojazdu * 2 * stawkaOsoby;
-    kosztDojazd = (kosztKm + kosztCzas) * wizyty;
-    dojazdOpis = `${km}km × 2 strony × ${wizyty} wizyt | ${(czasDojazdu*2).toFixed(1)}h × ${stawkaOsoby} zł × ${wizyty} wizyt`;
-  }
-
-  // ── SUMA KOSZTÓW ──
-  const kosztZewnetrzny = kosztAdmin + kosztMapa + kosztPOR + kosztUzgodZewn + kosztOperat + kosztGeologia + kosztKosztorys;
-  const kosztCalkowity = robociznaKoszt + kosztZewnetrzny + kosztDojazd;
-  const kosztSprzedazowy = robociznaSprzedaz + kosztMapaRobocizna + kosztZewnetrzny + kosztDojazd;
-
-  // ── CENA SPRZEDAŻOWA ──
-  let cenaDocelowa, cenaMin, cenaPremium;
-  if (ryczalt > 0) {
-    cenaDocelowa = ryczalt;
-    cenaMin = ryczalt * 0.9;
-    cenaPremium = ryczalt * 1.2;
-  } else {
-    const marzaMin = 0.15, marzaDoel = marzaTarget / 100, marzaPrem = 0.40;
-    cenaMin = kosztSprzedazowy / (1 - marzaMin);
-    cenaDocelowa = kosztSprzedazowy / (1 - marzaDoel);
-    cenaPremium = kosztSprzedazowy / (1 - marzaPrem);
-    // Minimalna cena
-    cenaMin = Math.max(cenaMin, minCena);
-    cenaDocelowa = Math.max(cenaDocelowa, minCena);
-    cenaPremium = Math.max(cenaPremium, minCena);
-  }
-
-  // Zaokrąglenie do 100
-  const r100 = n => Math.round(n / 100) * 100;
-  cenaMin = r100(cenaMin); cenaDocelowa = r100(cenaDocelowa); cenaPremium = r100(cenaPremium);
-
-  // ── MARŻA REALNA (dla ceny docelowej) ──
-  const marzaRealna = ((cenaDocelowa - kosztSprzedazowy) / cenaDocelowa * 100);
-  const marzaRealnaKwota = cenaDocelowa - kosztSprzedazowy;
-
-  // ── KLASYFIKACJA ──
-  const totalH = danielTotal + gtTotal;
-  const klasyfikacja = totalH <= 10 ? 'small' : totalH <= 40 ? 'medium' : 'large';
-  const klasLabel = { small: 'MAŁY', medium: 'ŚREDNI', large: 'DUŻY' }[klasyfikacja];
-  const klasClass = { small: 'badge-small', medium: 'badge-medium', large: 'badge-large' }[klasyfikacja];
-
-  // ── OSTRZEŻENIA ──
-  const alerts = [];
-  if (cenaDocelowa < kosztSprzedazowy) alerts.push({ type: 'red', icon: '🚫', msg: 'PROJEKT STRATNY — cena poniżej kosztów. Zmień cenę lub ogranicz zakres.' });
-  if (marzaRealna < 15 && cenaDocelowa >= kosztSprzedazowy) alerts.push({ type: 'amber', icon: '⚠️', msg: `Marża ${marzaRealna.toFixed(1)}% poniżej minimum 15%. Ryzyko projektowe.` });
-  if (cenaDocelowa < minCena) alerts.push({ type: 'amber', icon: '⚠️', msg: `Cena ${fmt(cenaDocelowa)} poniżej progu minimalnego ${fmt(minCena)}.` });
-  if (kosztDojazd > 0 && kosztDojazd / cenaDocelowa > 0.30) alerts.push({ type: 'orange', icon: '🚗', msg: `Koszty dojazdu (${fmt(kosztDojazd)}) stanowią ${(kosztDojazd/cenaDocelowa*100).toFixed(0)}% wartości projektu. Rozważ ograniczenie wizyt lub wyższą cenę.` });
-  if (strefa === 'daleka') alerts.push({ type: 'orange', icon: '📍', msg: 'Projekt daleki (200km+) — sprawdź czy liczba wizyt jest realistyczna.' });
-  const brakDanych = !document.getElementById('miejscowosc').value;
-  if (brakDanych) alerts.push({ type: 'blue', icon: 'ℹ️', msg: 'Wycena przybliżona — brak lokalizacji lub danych szczegółowych.' });
-
-  // ── RENDER ──
-  const fmt = n => Math.round(n).toLocaleString('pl-PL') + ' zł';
-  const fmtH = h => h.toFixed(1) + ' h';
-  const marzaClass = marzaRealna >= 30 ? 'marza-ok' : marzaRealna >= 15 ? 'marza-warn' : 'marza-bad';
-  const gtBarW = gtTotal / (gtTotal + danielTotal + 0.001) * 100;
-  const danielBarW = danielTotal / (gtTotal + danielTotal + 0.001) * 100;
-
-  const alertsHTML = alerts.length ? `
     <div class="card">
-      <div class="card-header"><span class="card-title">Ostrzeżenia i uwagi</span></div>
-      <div class="card-body">
-        <div class="alerts">
-          ${alerts.map(a => `<div class="alert alert-${a.type}"><span class="alert-icon">${a.icon}</span><span>${a.msg}</span></div>`).join('')}
+      <div class="ch"><span class="ct">Status opłacalności</span><span class="badge ${klC}">${klL} — ${fH(totH)}</span></div>
+      <div class="cb">
+        <div class="${statusClass}" style="margin-bottom:12px">
+          <span class="status-icon">${statusIcon}</span>
+          <div><div class="status-msg">${statusMsg}</div><div class="status-sub">${statusSub}</div></div>
         </div>
-      </div>
-    </div>` : '';
-
-  const dojazdRow = kosztDojazd > 0 ? `
-    <tr class="cat-row"><td colspan="3">Dojazdy</td></tr>
-    <tr><td>Koszty dojazdu</td><td class="internal">${dojazdOpis}</td><td>${fmt(kosztDojazd)}</td></tr>` : '';
-
-  const mapaRow = kosztMapa > 0 ? `<tr><td>Mapa (${mapaSug === 'projektowa' ? 'do celów proj.' : 'zasadnicza'})</td><td class="internal">zakup zewnętrzny</td><td>${fmt(kosztMapa)}</td></tr>` : '';
-  const porRow = kosztPOR > 0 ? `<tr><td>Projekt organizacji ruchu (POR)</td><td class="internal">podwykonawca</td><td>${fmt(kosztPOR)}</td></tr>` : '';
-  const uzgodRow = kosztUzgodZewn > 0 ? `<tr><td>Uzgodnienia branżowe — opłaty</td><td class="internal">${branzeSelected.join(', ')}</td><td>${fmt(kosztUzgodZewn)}</td></tr>` : '';
-  const operatRow = kosztOperat > 0 ? `<tr><td>Operat wodnoprawny</td><td class="internal">zewnętrzny</td><td>${fmt(kosztOperat)}</td></tr>` : '';
-  const geologiaRow = kosztGeologia > 0 ? `<tr><td>Badania geologiczne</td><td class="internal">zewnętrzny</td><td>${fmt(kosztGeologia)}</td></tr>` : '';
-  const kosztorysRow = kosztKosztorys > 0 ? `<tr><td>Kosztorysant</td><td class="internal">zewnętrzny</td><td>${fmt(kosztKosztorys)}</td></tr>` : '';
-
-  document.getElementById('placeholder').style.display = 'none';
-  document.getElementById('results').style.display = 'flex';
-  document.getElementById('topStatus').textContent = `${typ.replace(/_/g,' ')} | ${fmt(cenaDocelowa)}`;
-
-  document.getElementById('results').innerHTML = `
-
-    ${alertsHTML}
-
-    <!-- CENY -->
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">Warianty cenowe</span>
-        <span class="badge ${klasClass}">${klasLabel} — ${fmtH(totalH)}</span>
-      </div>
-      <div class="card-body">
-        <div class="price-grid">
-          <div class="price-box price-min">
-            <div class="price-box-label">Minimalny</div>
-            <div class="price-box-value">${fmt(cenaMin)}</div>
-            <div class="price-box-sub">marża 15%</div>
-          </div>
-          <div class="price-box price-target">
-            <div class="price-box-label">⭐ Docelowy</div>
-            <div class="price-box-value">${fmt(cenaDocelowa)}</div>
-            <div class="price-box-sub">marża ${marzaTarget}%</div>
-          </div>
-          <div class="price-box price-premium">
-            <div class="price-box-label">Premium</div>
-            <div class="price-box-value">${fmt(cenaPremium)}</div>
-            <div class="price-box-sub">marża 40%</div>
-          </div>
-        </div>
-        <div class="sep"></div>
-        <div class="inline-row">
-          <span>Koszt sprzedażowy (baza kalkulacji)</span>
-          <span>${fmt(kosztSprzedazowy)}</span>
-        </div>
-        <div class="inline-row">
-          <span>Marża realna (cena docelowa)</span>
-          <span class="marza-badge ${marzaClass}">${marzaRealna.toFixed(1)}% | ${fmt(marzaRealnaKwota)}</span>
-        </div>
-        ${ryczalt > 0 ? `<div class="nota">⚠ Cena ryczałtowa ustawiona ręcznie: ${fmt(ryczalt)}</div>` : ''}
-      </div>
-    </div>
-
-    <!-- PODZIAŁ RÓL -->
-    <div class="card">
-      <div class="card-header"><span class="card-title">Robocizna — podział ról</span></div>
-      <div class="card-body">
-        <div class="role-bars">
-          <div class="role-bar">
-            <div>
-              <div class="role-bar-label">GT (Grzegorz)</div>
-              <div class="role-bar-sub">${fmtH(gtTotal)} × ${STAWKA_GT} zł = ${fmt(gtTotal*STAWKA_GT)}</div>
-            </div>
-            <div class="role-bar-track"><div class="role-bar-fill bar-gt" style="width:${gtBarW}%"></div></div>
-            <div class="role-bar-value">${fmtH(gtTotal)}</div>
-          </div>
-          <div class="role-bar">
-            <div>
-              <div class="role-bar-label">Daniel</div>
-              <div class="role-bar-sub">${fmtH(danielTotal)} × ${STAWKA_DANIEL} zł = ${fmt(danielTotal*STAWKA_DANIEL)}</div>
-            </div>
-            <div class="role-bar-track"><div class="role-bar-fill bar-daniel" style="width:${danielBarW}%"></div></div>
-            <div class="role-bar-value">${fmtH(danielTotal)}</div>
-          </div>
-        </div>
-        <div class="sep"></div>
-        <div class="inline-row">
-          <span>Łączna robocizna (cena sprzedażowa)</span>
-          <span>${fmt(robociznaSprzedaz)}</span>
-        </div>
-        <div class="inline-row">
-          <span>Koszt wewnętrzny robocizny</span>
-          <span style="color:var(--text3)">${fmt(robociznaKoszt)}</span>
+        <div class="kpi-grid">
+          <div class="kpi"><div class="kpi-val" style="color:var(--ac)">${marzR.toFixed(1)}%</div><div class="kpi-lbl">Marża procentowa</div></div>
+          <div class="kpi"><div class="kpi-val">${fmt(zysk)}</div><div class="kpi-lbl">Zysk kwotowy</div></div>
+          <div class="kpi"><div class="kpi-val">${narzut.toFixed(1)}%</div><div class="kpi-lbl">Narzut na koszt</div></div>
+          <div class="kpi"><div class="kpi-val">${Math.round(zyskNaGtH).toLocaleString('pl-PL')} zł</div><div class="kpi-lbl">Zysk na 1h GT</div></div>
+          <div class="kpi"><div class="kpi-val">${Math.round(zyskNaTotH).toLocaleString('pl-PL')} zł</div><div class="kpi-lbl">Zysk na 1h łącznie</div></div>
+          <div class="kpi"><div class="kpi-val">${udzGT.toFixed(0)}%</div><div class="kpi-lbl">Udział GT w projekcie</div></div>
+          <div class="kpi"><div class="kpi-val">${udzExt.toFixed(0)}%</div><div class="kpi-lbl">Udział kosztów zewnętrznych</div></div>
+          <div class="kpi"><div class="kpi-val">${fmt(kWewn)}</div><div class="kpi-lbl">Koszt całkowity</div></div>
         </div>
       </div>
     </div>
 
-    <!-- ARKUSZ KOSZTÓW -->
     <div class="card">
-      <div class="card-header"><span class="card-title">Arkusz kosztów — wewnętrzny</span></div>
-      <div class="card-body" style="padding:0">
-        <table class="cost-table">
-          <thead>
-            <tr><th>Pozycja</th><th>Uwagi</th><th>Kwota</th></tr>
-          </thead>
+      <div class="ch"><span class="ct">Warianty cenowe</span></div>
+      <div class="cb">
+        <div class="pg">
+          <div class="pb pmin"><div class="pbl">Minimalny</div><div class="pbv">${fmt(cMin)}</div><div class="pbs">marża 15%</div></div>
+          <div class="pb ptgt"><div class="pbl">⭐ Docelowy</div><div class="pbv">${fmt(cDoel)}</div><div class="pbs">marża ${marzP}%</div></div>
+          <div class="pb pprem"><div class="pbl">Premium</div><div class="pbv">${fmt(cPrem)}</div><div class="pbs">marża 40%</div></div>
+        </div>
+        <div class="sep"></div>
+        <div class="ir"><span>Baza kalkulacji</span><span>${fmt(baza)}</span></div>
+        <div class="ir"><span>Marża realna</span><span class="mb ${mC}">${marzR.toFixed(1)}% | ${fmt(Math.round(cDoel-baza))}</span></div>
+        <div class="wybrana-cena">
+          <label>Wybrana cena ofertowa</label>
+          <div class="wybrana-row">
+            <select onchange="updateWybrana(this.value)">
+              <option value="${cMin}">Minimalna — ${fmt(cMin)}</option>
+              <option value="${cDoel}" selected>Docelowa — ${fmt(cDoel)}</option>
+              <option value="${cPrem}">Premium — ${fmt(cPrem)}</option>
+              <option value="custom">Inna kwota...</option>
+            </select>
+            <input type="number" id="wybranaInp" value="${cDoel}" min="0" oninput="lastCalc&&(lastCalc.cWybrana=parseFloat(this.value)||0)">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ch"><span class="ct">Robocizna — podział ról</span></div>
+      <div class="cb">
+        <div class="rbars">
+          <div class="rbar"><div><div class="rbl">GT — ${fH(gTot)}</div><div class="rbs">${fH(gTot)} × ${SGT} zł = ${fmt(gTot*SGT)}</div></div><div class="rbt"><div class="rbf bgt" style="width:${gW}%"></div></div><div class="rbv">${fmt(gTot*SGT)}</div></div>
+          <div class="rbar"><div><div class="rbl">Daniel — ${fH(dTot)}</div><div class="rbs">${fH(dTot)} × ${SDAN} zł = ${fmt(dTot*SDAN)}</div></div><div class="rbt"><div class="rbf bdan" style="width:${dW}%"></div></div><div class="rbv">${fmt(dTot*SDAN)}</div></div>
+        </div>
+        <div class="sep"></div>
+        <div class="ir"><span>Robocizna sprzedażowa</span><span>${fmt(robSprzed)}</span></div>
+        <div class="ir"><span>Koszt wewnętrzny</span><span style="color:var(--tx3)">${fmt(robKoszt)}</span></div>
+        <div class="ir"><span>Marża brutto na robociźnie</span><span>${fmt(robSprzed-robKoszt)}</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ch"><span class="ct">Arkusz kosztów — wewnętrzny</span></div>
+      <div class="cb" style="padding:0">
+        <table class="ctbl">
+          <thead><tr><th>Pozycja</th><th>Kod / uwagi</th><th>Kwota</th></tr></thead>
           <tbody>
-            <tr class="cat-row"><td colspan="3">Robocizna (sprzedażowa)</td></tr>
-            <tr><td>GT — ${fmtH(gtTotal)}</td><td class="internal">× ${STAWKA_GT} zł/h</td><td>${fmt(gtTotal*STAWKA_GT)}</td></tr>
-            <tr><td>Daniel — ${fmtH(danielTotal)}</td><td class="internal">× ${STAWKA_DANIEL} zł/h</td><td>${fmt(danielTotal*STAWKA_DANIEL)}</td></tr>
-            ${hMapaDaniel > 0 ? `<tr><td>Daniel — mapa ${fmtH(hMapaDaniel)}</td><td class="internal">obsługa mapy</td><td>${fmt(hMapaDaniel*STAWKA_DANIEL)}</td></tr>` : ''}
-
-            <tr class="cat-row"><td colspan="3">Koszty administracyjne</td></tr>
-            <tr><td>Opłaty skarbowe, wypisy, ZUD</td><td class="internal">K01–K04</td><td>${fmt(kosztAdmin)}</td></tr>
-
-            <tr class="cat-row"><td colspan="3">Koszty zewnętrzne</td></tr>
-            ${mapaRow}
-            ${porRow}
-            ${uzgodRow}
-            ${operatRow}
-            ${geologiaRow}
-            ${kosztorysRow}
-            ${dojazdRow}
-
-            <tr class="total-row">
-              <td colspan="2">ŁĄCZNY KOSZT PROJEKTU (wewnętrzny)</td>
-              <td>${fmt(kosztCalkowity)}</td>
-            </tr>
-            <tr class="total-row">
-              <td colspan="2">BAZA KALKULACJI (sprzedażowa)</td>
-              <td>${fmt(kosztSprzedazowy)}</td>
-            </tr>
+            <tr class="catr"><td colspan="3">Robocizna (stawki sprzedażowe)</td></tr>
+            <tr><td>GT — ${fH(gTot)}</td><td class="int">× ${SGT} zł/h</td><td>${fmt(gTot*SGT)}</td></tr>
+            <tr><td>Daniel — ${fH(dTot)}</td><td class="int">× ${SDAN} zł/h</td><td>${fmt(dTot*SDAN)}</td></tr>
+            <tr class="catr"><td colspan="3">Koszty administracyjne</td></tr>
+            ${kOplSk>0?`<tr><td>Opłaty skarbowe</td><td class="int">K01</td><td>${fmt(kOplSk)}</td></tr>`:''}
+            ${kAdm>0?`<tr><td>Wypisy, decyzje</td><td class="int">K02–K03</td><td>${fmt(kAdm)}</td></tr>`:''}
+            ${kZUD>0?`<tr><td>ZUD</td><td class="int">K04</td><td>${fmt(kZUD)}</td></tr>`:''}
+            ${extItems.length>0?`<tr class="catr"><td colspan="3">Usługi zewnętrzne</td></tr>${extRows}`:''}
+            ${kDoj>0?`<tr class="catr"><td colspan="3">Dojazdy</td></tr><tr><td>Koszty dojazdu</td><td class="int">${dojOpis}</td><td>${fmt(kDoj)}</td></tr>`:''}
+            ${kDruk>0?`<tr class="catr"><td colspan="3">Wydruk / kompletacja</td></tr><tr><td>Koszty wydruku</td><td class="int">${S.druk==='rycz'?'ryczałt':'kalkulacja szczegółowa'}</td><td>${fmt(kDruk)}</td></tr>`:''}
+            <tr class="totr"><td colspan="2">Koszt całkowity (wewnętrzny)</td><td>${fmt(kWewn)}</td></tr>
+            <tr class="totr"><td colspan="2">Baza kalkulacji (sprzedażowa)</td><td>${fmt(baza)}</td></tr>
           </tbody>
         </table>
       </div>
     </div>
 
-    <!-- REGUŁY KTÓRE ZADZIAŁAŁY -->
     <div class="card">
-      <div class="card-header"><span class="card-title">Zastosowane reguły automatyczne</span></div>
-      <div class="card-body">
-        <div style="display:flex;flex-wrap:wrap;gap:6px;font-size:11px">
-          ${pasDrog ? '<span class="check-item active" style="cursor:default">R01 Pas drogowy → POR + robocizna</span>' : ''}
-          ${uzgodBranżowe && branzeSelected.length > 0 ? `<span class="check-item active" style="cursor:default">R02 Uzgodnienia (${branzeSelected.join(', ')})</span>` : ''}
-          ${mapa === 'brak' ? `<span class="check-item active" style="cursor:default">R03/R04 Mapa ${mapaSug} — do zakupu</span>` : ''}
-          ${dlugoscSieci > 200 ? '<span class="check-item active" style="cursor:default">R05 Sieć >200m → korekta robocizny</span>' : ''}
-          ${strefaGorn ? '<span class="check-item active" style="cursor:default">R06 Strefa górnicza → OUG</span>' : ''}
-          ${brakWT ? '<span class="check-item active" style="cursor:default">R08 Brak WT → czas na uzyskanie</span>' : ''}
-          ${liczbaGestorow > 1 ? `<span class="check-item active" style="cursor:default">R09 ${liczbaGestorow} gestorów → skalowanie uzgodnień</span>` : ''}
-          ${strefa !== 'lokalna' ? `<span class="check-item active" style="cursor:default">R10 Strefa ${strefa} → koszty dojazdu</span>` : ''}
-          ${typObiektu === 'deweloper' ? '<span class="check-item active" style="cursor:default">R12 Deweloper → iteracje +20%</span>' : ''}
-          ${klasyfikacja === 'small' ? '<span class="check-item active" style="cursor:default">R13 Mały projekt → GT tylko nadzór</span>' : ''}
-        </div>
+      <div class="ch"><span class="ct">Eksport do Excel</span></div>
+      <div class="cb">
+        <div style="font-size:12px;color:var(--tx2);margin-bottom:10px">Zapisz wycenę do historii kalkulacji (.xlsx). Każde kliknięcie pobiera plik z jednym rekordem — zbieraj je razem lub dopisuj ręcznie do jednego pliku historii.</div>
+        <div class="f" style="margin-bottom:10px"><label>Uwagi dodatkowe (opcjonalnie)</label><textarea id="uwagi" placeholder="np. klient priorytetowy, projekt pilny..."></textarea></div>
+        <button class="btn-xl" onclick="exportXLSX()">📥 Pobierz raport Excel (.xlsx)</button>
       </div>
     </div>
 
+    ${reg.length?`<div class="card"><div class="ch"><span class="ct">Zastosowane reguły</span></div><div class="cb"><div class="cg">${reg.map(r=>`<span class="ci active" style="cursor:default">${r}</span>`).join('')}</div></div></div>`:''}
   `;
 }
 
-function resetForm() {
-  document.getElementById('typProjektu').value = '';
-  document.getElementById('miejscowosc').value = '';
-  document.getElementById('dlugoscSieci').value = '0';
-  document.getElementById('liczbaObiektow').value = '1';
-  document.getElementById('liczbaGestorow').value = '1';
-  document.getElementById('mapa').value = 'brak';
-  document.getElementById('ryczalt').value = '0';
-  document.getElementById('marzaTarget').value = '30';
-  document.getElementById('minCena').value = '2000';
-  document.getElementById('km').value = '0';
-  document.getElementById('wizyty').value = '1';
-  document.getElementById('czasDojazdu').value = '1';
-  document.querySelectorAll('.check-item').forEach(el => { el.classList.remove('active'); el.querySelector('input').checked = false; });
-  document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
-  document.querySelectorAll('.toggle-group').forEach(grp => { const first = grp.querySelector('.toggle-btn'); if (first) first.classList.add('active'); });
-  Object.assign(state, { zlozonosc:'prosta', strefa:'lokalna', pasDrogowy:'nie', warunki:'sa', strefaGorn:'nie', uzgod:'nie', trudnoscUzgod:'prosta' });
-  document.getElementById('dojazdForm').style.display = 'none';
-  document.getElementById('uzgodForm').style.display = 'none';
-  document.getElementById('placeholder').style.display = 'flex';
-  document.getElementById('results').style.display = 'none';
-  document.getElementById('topStatus').textContent = 'Wypełnij formularz i kliknij Oblicz';
+function updateWybrana(val){
+  if(val==='custom') return;
+  document.getElementById('wybranaInp').value=parseFloat(val)||0;
+  if(lastCalc)lastCalc.cWybrana=parseFloat(val)||0;
 }
+
+function exportXLSX(){
+  if(!lastCalc){alert('Najpierw oblicz wycenę');return}
+  const uwagi=document.getElementById('uwagi')?.value||'';
+  const c=lastCalc;
+  const cWybrana=parseFloat(document.getElementById('wybranaInp')?.value)||c.cDoel;
+  const marzR=c.marzR||0;
+
+  // STATUS
+  const isOK=marzR>=30, isWarn=marzR>=15&&marzR<30;
+  const sBg=isOK?'EAF3DE':isWarn?'FAEEDA':'FCEBEB';
+  const sFc=isOK?'3B6D11':isWarn?'8A5A00':'8A1A1A';
+  const sIco=isOK?'🟢':isWarn?'🟡':'🔴';
+
+  // Helper styles
+  const hdr=(sz=10)=>({font:{bold:true,name:'Arial',sz,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:'1E4D8C'}},alignment:{horizontal:'center',vertical:'center'}});
+  const cell=(sz=10,bold=false,fc='1A1A18',bg=null,align='left')=>{
+    const s={font:{name:'Arial',sz,bold,color:{rgb:fc}},alignment:{horizontal:align,vertical:'center',wrapText:false}};
+    if(bg)s.fill={fgColor:{rgb:bg}};
+    return s;
+  };
+  const numFmt='#,##0';
+
+  const wb=XLSX.utils.book_new();
+
+  // ══ ARKUSZ 1: RAPORT WYCENY ══
+  const ws1={};
+  let r=0;
+
+  function addRow(ws, rowIdx, cells){
+    cells.forEach(({c:ci, v, s, z})=>{
+      const addr=XLSX.utils.encode_cell({r:rowIdx,c:ci});
+      ws[addr]={v, t: typeof v==='number'?'n':'s'};
+      if(s) ws[addr].s=s;
+      if(z) ws[addr].z=z;
+    });
+  }
+
+  // TYTUŁ
+  ws1['!merges']=[];
+  function merge(ws,r1,c1,r2,c2){ws['!merges'].push({s:{r:r1,c:c1},e:{r:r2,c:c2}})}
+
+  // ROW 0: tytuł
+  ws1[XLSX.utils.encode_cell({r:0,c:1})]={v:'AMT Systems — Raport wyceny',t:'s',s:{font:{name:'Arial',sz:16,bold:true,color:{rgb:'1E4D8C'}},alignment:{vertical:'center'}}};
+  merge(ws1,0,1,0,6);
+  // ROW 1: podtytuł
+  const subT=`${c.nazwaProj||'—'}  |  ${c.klientN||'—'}  |  ${c.data||'—'}`;
+  ws1[XLSX.utils.encode_cell({r:1,c:1})]={v:subT,t:'s',s:cell(10,false,'9A9A8E',null,'left')};
+  merge(ws1,1,1,1,6);
+
+  // ROW 3: SEKCJA 1 HEADER
+  ws1[XLSX.utils.encode_cell({r:3,c:1})]={v:'SEKCJA 1 — PODSUMOWANIE DECYZYJNE',t:'s',s:{font:{name:'Arial',sz:9,bold:true,color:{rgb:'9A9A8E'}},fill:{fgColor:{rgb:'F5F4F0'}},alignment:{vertical:'center'}}};
+  merge(ws1,3,1,3,6);
+
+  // ROW 4-6: metadane 2 kolumny
+  const meta=[['Nazwa projektu',c.nazwaProj||'—','Klient',c.klientN||'—'],['Typ projektu',c.typ||'—','Lokalizacja',c.miasto||'—'],['Złożoność',c.zloz||'—','Data kalkulacji',c.data||'—']];
+  meta.forEach((row,i)=>{
+    const ri=4+i;
+    ws1[XLSX.utils.encode_cell({r:ri,c:1})]={v:row[0],t:'s',s:cell(9,false,'9A9A8E','F9F8F5')};
+    ws1[XLSX.utils.encode_cell({r:ri,c:2})]={v:row[1],t:'s',s:cell(10,true,'1A1A18','F9F8F5')};
+    ws1[XLSX.utils.encode_cell({r:ri,c:4})]={v:row[2],t:'s',s:cell(9,false,'9A9A8E','F9F8F5')};
+    ws1[XLSX.utils.encode_cell({r:ri,c:5})]={v:row[3],t:'s',s:cell(10,true,'1A1A18','F9F8F5')};
+  });
+
+  // ROW 8-9: KAFELKI FINANSOWE
+  ws1[XLSX.utils.encode_cell({r:8,c:1})]={v:'Cena sprzedażowa',t:'s',s:cell(9,false,'9A9A8E','E8EEF8','center')};
+  ws1[XLSX.utils.encode_cell({r:8,c:2})]={v:'Koszt całkowity',t:'s',s:cell(9,false,'9A9A8E','F5F4F0','center')};
+  ws1[XLSX.utils.encode_cell({r:8,c:4})]={v:'Zysk kwotowy',t:'s',s:cell(9,false,'9A9A8E','EAF3DE','center')};
+  ws1[XLSX.utils.encode_cell({r:8,c:5})]={v:'Marża',t:'s',s:cell(9,false,'9A9A8E','EAF3DE','center')};
+  ws1[XLSX.utils.encode_cell({r:9,c:1})]={v:cWybrana,t:'n',z:numFmt,s:cell(18,true,'1E4D8C','E8EEF8','center')};
+  ws1[XLSX.utils.encode_cell({r:9,c:2})]={v:c.kWewn,t:'n',z:numFmt,s:cell(18,true,'1A1A18','F5F4F0','center')};
+  ws1[XLSX.utils.encode_cell({r:9,c:4})]={v:c.zysk,t:'n',z:numFmt,s:cell(18,true,'3B6D11','EAF3DE','center')};
+  ws1[XLSX.utils.encode_cell({r:9,c:5})]={v:marzR/100,t:'n',z:'0.0%',s:cell(18,true,'3B6D11','EAF3DE','center')};
+
+  // ROW 11: STATUS
+  ws1[XLSX.utils.encode_cell({r:11,c:1})]={v:`${sIco}  ${c.statusMsg||'—'}  |  Marża: ${marzR.toFixed(1)}%`,t:'s',s:{font:{name:'Arial',sz:12,bold:true,color:{rgb:sFc}},fill:{fgColor:{rgb:sBg}},alignment:{horizontal:'left',vertical:'center'}}};
+  merge(ws1,11,1,11,6);
+
+  // ROW 13-14: KPI
+  const kpiL=['Zysk na 1h GT','Zysk na 1h łącznie','Udział GT w projekcie','Udział kosztów zewn.'];
+  const kpiV=[c.zyskNaGtH, c.zyskNaTotH, (c.udzGT||0)/100, (c.udzExt||0)/100];
+  const kpiZ=[numFmt,numFmt,'0%','0%'];
+  kpiL.forEach((l,i)=>{
+    const ci=[1,2,4,5][i];
+    ws1[XLSX.utils.encode_cell({r:13,c:ci})]={v:l,t:'s',s:cell(9,false,'9A9A8E','F9F8F5','center')};
+    ws1[XLSX.utils.encode_cell({r:14,c:ci})]={v:kpiV[i],t:'n',z:kpiZ[i],s:cell(13,true,'1E4D8C','F9F8F5','center')};
+  });
+
+  // ROW 16: SEKCJA 2
+  ws1[XLSX.utils.encode_cell({r:16,c:1})]={v:'SEKCJA 2 — STRUKTURA KOSZTÓW',t:'s',s:{font:{name:'Arial',sz:9,bold:true,color:{rgb:'9A9A8E'}},fill:{fgColor:{rgb:'F5F4F0'}},alignment:{vertical:'center'}}};
+  merge(ws1,16,1,16,6);
+
+  // Bloki kosztów
+  const costBlocks=[
+    {title:'ROBOCIZNA',rows:[
+      [`GT — ${c.gTot?.toFixed(1)||0}h × 250 zł/h`,c.kGTsprzed||0],
+      [`Daniel — ${c.dTot?.toFixed(1)||0}h × 140 zł/h`,c.kDansprzed||0],
+      ['Koszt wewnętrzny',(c.kGTwewn||0)+(c.kDanwewn||0)],
+    ],total:(c.kGTsprzed||0)+(c.kDansprzed||0),bg:'F9F8F5'},
+    {title:'KOSZTY ZEWNĘTRZNE',rows:[['Usługi zewnętrzne (K30–K39)',c.kExt||0]],total:c.kExt||0,bg:'FFFEF8'},
+    {title:'KOSZTY ADMINISTRACYJNE',rows:[['Opłaty administracyjne (K01–K04)',c.kAdmin||0]],total:c.kAdmin||0,bg:'F9F8F5'},
+    {title:'DOJAZDY I WYDRUK',rows:[['Dojazdy',c.kDoj||0],['Wydruk / kompletacja',c.kDruk||0]],total:(c.kDoj||0)+(c.kDruk||0),bg:'FFFEF8'},
+  ];
+  let rr=17;
+  costBlocks.forEach(b=>{
+    ws1[XLSX.utils.encode_cell({r:rr,c:1})]={v:b.title,t:'s',s:{font:{name:'Arial',sz:9,bold:true,color:{rgb:'5A5A52'}},fill:{fgColor:{rgb:'EDEBE3'}},alignment:{vertical:'center'}}};
+    merge(ws1,rr,1,rr,6); rr++;
+    b.rows.forEach(([lbl,val])=>{
+      ws1[XLSX.utils.encode_cell({r:rr,c:1})]={v:lbl,t:'s',s:cell(10,false,'5A5A52',b.bg)};
+      ws1[XLSX.utils.encode_cell({r:rr,c:3})]={v:val,t:'n',z:numFmt,s:{...cell(10,true,'1A1A18',b.bg),alignment:{horizontal:'right',vertical:'center'}}};
+      [2,4,5,6].forEach(ci=>{ if(!ws1[XLSX.utils.encode_cell({r:rr,c:ci})]) ws1[XLSX.utils.encode_cell({r:rr,c:ci})]={v:'',t:'s',s:{fill:{fgColor:{rgb:b.bg}}}}; });
+      rr++;
+    });
+    ws1[XLSX.utils.encode_cell({r:rr,c:1})]={v:'Razem',t:'s',s:cell(10,true,'1A1A18','EDEBE3')};
+    ws1[XLSX.utils.encode_cell({r:rr,c:3})]={v:b.total,t:'n',z:numFmt,s:{...cell(11,true,'1E4D8C','EDEBE3'),alignment:{horizontal:'right',vertical:'center'}}};
+    ws1[XLSX.utils.encode_cell({r:rr,c:5})]={v:'Udział w cenie:',t:'s',s:cell(9,false,'9A9A8E','EDEBE3')};
+    ws1[XLSX.utils.encode_cell({r:rr,c:6})]={v:cWybrana>0?b.total/cWybrana:0,t:'n',z:'0%',s:cell(11,true,'1E4D8C','EDEBE3','center')};
+    rr+=2;
+  });
+
+  // Warianty cenowe
+  ws1[XLSX.utils.encode_cell({r:rr,c:1})]={v:'WARIANTY CENOWE',t:'s',s:{font:{name:'Arial',sz:9,bold:true,color:{rgb:'5A5A52'}},fill:{fgColor:{rgb:'EDEBE3'}},alignment:{vertical:'center'}}};
+  merge(ws1,rr,1,rr,6); rr++;
+  [['Minimalna (marża 15%)',c.cMin,'F5F4F0'],['Docelowa (marża 30%)',c.cDoel,'E8EEF8'],['Premium (marża 40%)',c.cPrem,'F5F4F0'],['Wybrana / ofertowa',cWybrana,'EAF3DE']].forEach(([l,v,bg])=>{
+    ws1[XLSX.utils.encode_cell({r:rr,c:1})]={v:l,t:'s',s:cell(10,false,'5A5A52',bg)};
+    ws1[XLSX.utils.encode_cell({r:rr,c:3})]={v:v,t:'n',z:numFmt,s:{...cell(11,true,'1E4D8C',bg),alignment:{horizontal:'right',vertical:'center'}}};
+    [2,4,5,6].forEach(ci=>{ ws1[XLSX.utils.encode_cell({r:rr,c:ci})]={v:'',t:'s',s:{fill:{fgColor:{rgb:bg}}}}; });
+    rr++;
+  });
+  rr++;
+
+  // SEKCJA 3 — szczegóły (zwinięte przez outline)
+  ws1[XLSX.utils.encode_cell({r:rr,c:1})]={v:'SEKCJA 3 — SZCZEGÓŁY TECHNICZNE (kliknij + aby rozwinąć)',t:'s',s:{font:{name:'Arial',sz:9,bold:true,color:{rgb:'9A9A8E'}},fill:{fgColor:{rgb:'F5F4F0'}},alignment:{vertical:'center'}}};
+  merge(ws1,rr,1,rr,6);
+  const detailStartR=rr; rr++;
+  const details=[
+    ['Długość sieci (m)',c.dSiec||0],['Liczba obiektów',c.nObj||1],
+    ['Pas drogowy',c.pas||'—'],['Warunki techniczne',c.wt||'—'],
+    ['Liczba gestorów',c.nGest||1],['Strefa górnicza',c.gorn||'—'],
+    ['Uzgodnienia branżowe',c.uzg||'—'],['Operat wodnoprawny',c.operat||'—'],
+    ['Liczba wizyt (dojazd)',c.wizyty||0],
+    ['Ostrzeżenia systemu',c.awStr||'Brak'],['Uwagi użytkownika',uwagi||'—'],
+  ];
+  const detailRows=[];
+  details.forEach(([l,v])=>{
+    ws1[XLSX.utils.encode_cell({r:rr,c:1})]={v:l,t:'s',s:cell(10,false,'9A9A8E','FAFAF8')};
+    ws1[XLSX.utils.encode_cell({r:rr,c:3})]={v:String(v),t:'s',s:cell(10,false,'1A1A18','FAFAF8')};
+    [2,4,5,6].forEach(ci=>{ ws1[XLSX.utils.encode_cell({r:rr,c:ci})]={v:'',t:'s',s:{fill:{fgColor:{rgb:'FAFAF8'}}}}; });
+    detailRows.push(rr); rr++;
+  });
+
+  // Outline/group dla sekcji 3
+  ws1['!rows']=[];
+  for(let i=0;i<=rr;i++) ws1['!rows'][i]={hpt:18};
+  detailRows.forEach(ri=>{ ws1['!rows'][ri]={hpt:18,hidden:true,outlineLevel:1}; });
+  ws1['!rows'][detailStartR]={hpt:18,outlineLevel:0};
+
+  // Ref i kolumny
+  ws1['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:rr,c:7}});
+  ws1['!cols']=[{wch:2},{wch:30},{wch:18},{wch:16},{wch:16},{wch:14},{wch:14},{wch:2}];
+  ws1['!sheetView']=[{showGridLines:false}];
+  XLSX.utils.book_append_sheet(wb,ws1,'Raport wyceny');
+
+  // ══ ARKUSZ 2: HISTORIA WYCEN ══
+  const histHeaders=['Data','Projekt','Klient','Typ','Lokalizacja','Złożoność','h GT','h Daniel','Koszt wewn. (zł)','Rob. sprzed. (zł)','Koszty zewn. (zł)','Koszty adm. (zł)','Dojazdy (zł)','Wydruk (zł)','Koszt całk. (zł)','Cena min. (zł)','Cena doel. (zł)','Cena prem. (zł)','Cena wybr. (zł)','Zysk (zł)','Marża (%)','Narzut (%)','Zysk/h GT (zł)','Zysk/h łącz. (zł)','Status','Ostrzeżenia','Uwagi'];
+  const histRow=[c.data,c.nazwaProj,c.klientN,c.typ,c.miasto,c.zloz,c.gTot,c.dTot,(c.kGTwewn||0)+(c.kDanwewn||0),(c.kGTsprzed||0)+(c.kDansprzed||0),c.kExt,c.kAdmin,c.kDoj,c.kDruk,c.kWewn,c.cMin,c.cDoel,c.cPrem,cWybrana,c.zysk,marzR,c.narzut,c.zyskNaGtH,c.zyskNaTotH,c.statusMsg,c.awStr,uwagi];
+  const ws2=XLSX.utils.aoa_to_sheet([histHeaders,histRow]);
+  ws2['!cols']=histHeaders.map(h=>({wch:Math.max(h.length+2,12)}));
+  const hRange=XLSX.utils.decode_range(ws2['!ref']);
+  for(let C=hRange.s.c;C<=hRange.e.c;C++){
+    const a=XLSX.utils.encode_cell({r:0,c:C});
+    if(ws2[a]) ws2[a].s={font:{bold:true,name:'Arial',sz:10,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:'1E4D8C'}},alignment:{horizontal:'center',vertical:'center'}};
+  }
+  for(let C=6;C<=24;C++){
+    const a=XLSX.utils.encode_cell({r:1,c:C});
+    if(ws2[a]) ws2[a].z=C===20||C===21?'0.0':numFmt;
+  }
+  ws2['!sheetView']=[{showGridLines:false}];
+  XLSX.utils.book_append_sheet(wb,ws2,'Historia wycen');
+
+  // ══ ARKUSZ 3: DASHBOARD ══
+  const ws3={};
+  ws3['!merges']=[];
+  function m3(r1,c1,r2,c2){ws3['!merges'].push({s:{r:r1,c:c1},e:{r:r2,c:c2}})}
+  ws3[XLSX.utils.encode_cell({r:0,c:1})]={v:'AMT Systems — Dashboard wycen',t:'s',s:{font:{name:'Arial',sz:18,bold:true,color:{rgb:'1E4D8C'}},alignment:{vertical:'center'}}};
+  m3(0,1,0,6);
+  ws3[XLSX.utils.encode_cell({r:1,c:1})]={v:'Podsumowanie ostatniej wyceny + statystyki historii',t:'s',s:cell(11,false,'9A9A8E',null,'left')};
+  m3(1,1,1,6);
+
+  ws3[XLSX.utils.encode_cell({r:3,c:1})]={v:'OSTATNIA WYCENA',t:'s',s:{font:{name:'Arial',sz:9,bold:true,color:{rgb:'9A9A8E'}},fill:{fgColor:{rgb:'F5F4F0'}},alignment:{vertical:'center'}}};
+  m3(3,1,3,6);
+
+  const dashItems=[
+    ['Projekt',c.nazwaProj||'—','s','1A1A18','FFFFFF'],
+    ['Cena wybrana',cWybrana,'n','1E4D8C','E8EEF8'],
+    ['Zysk kwotowy',c.zysk,'n','3B6D11','EAF3DE'],
+    ['Marża',marzR/100,'n',sFc,sBg],
+    ['Status',`${sIco} ${c.statusMsg||'—'}`,'s',sFc,sBg],
+  ];
+  let dr=4;
+  dashItems.forEach(([l,v,t,fc,bg])=>{
+    ws3[XLSX.utils.encode_cell({r:dr,c:1})]={v:l,t:'s',s:cell(9,false,'9A9A8E','F5F4F0')};
+    m3(dr,1,dr,6); dr++;
+    ws3[XLSX.utils.encode_cell({r:dr,c:1})]={v:v,t,s:cell(14,true,fc,bg),z:t==='n'?(l.includes('arża')?'0.0%':numFmt):undefined};
+    m3(dr,1,dr,6); dr+=2;
+  });
+
+  ws3[XLSX.utils.encode_cell({r:dr,c:1})]={v:'STATYSTYKI HISTORII WYCEN',t:'s',s:{font:{name:'Arial',sz:9,bold:true,color:{rgb:'9A9A8E'}},fill:{fgColor:{rgb:'F5F4F0'}},alignment:{vertical:'center'}}};
+  m3(dr,1,dr,6); dr++;
+  [['Liczba wycen','=COUNTA(\'Historia wycen\'!A2:A9999)'],['Średnia marża (%)','=IFERROR(AVERAGE(\'Historia wycen\'!U2:U9999),0)'],['Łączna wartość wycen (zł)','=IFERROR(SUM(\'Historia wycen\'!S2:S9999),0)'],['Łączny zysk (zł)','=IFERROR(SUM(\'Historia wycen\'!T2:T9999),0)'],['Średnia cena projektu (zł)','=IFERROR(AVERAGE(\'Historia wycen\'!S2:S9999),0)']].forEach(([l,f])=>{
+    ws3[XLSX.utils.encode_cell({r:dr,c:1})]={v:l,t:'s',s:cell(11,false,'5A5A52','FAFAF8')};
+    ws3[XLSX.utils.encode_cell({r:dr,c:5})]={v:f,t:'s',s:{...cell(12,true,'1E4D8C','FAFAF8'),alignment:{horizontal:'right',vertical:'center'}},f:f.replace(/^=/,'')};
+    m3(dr,5,dr,6);
+    [2,3,4].forEach(ci=>{ ws3[XLSX.utils.encode_cell({r:dr,c:ci})]={v:'',t:'s',s:{fill:{fgColor:{rgb:'FAFAF8'}}}}; });
+    dr++;
+  });
+
+  ws3['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:dr+2,c:7}});
+  ws3['!cols']=[{wch:2},{wch:28},{wch:14},{wch:14},{wch:14},{wch:16},{wch:14},{wch:2}];
+  ws3['!rows']=Array(dr+2).fill({hpt:20});
+  ws3['!sheetView']=[{showGridLines:false}];
+  XLSX.utils.book_append_sheet(wb,ws3,'Dashboard');
+
+  const fname=`AMT_Raport_${(c.nazwaProj||'wycena').replace(/[^a-zA-Z0-9]/g,'_')}_${(c.data||'').replace(/\./g,'-')}.xlsx`;
+  XLSX.writeFile(wb,fname);
+}
+
+function resetAll(){
+  ['nazwaProj','klient','miasto','dSiec','rycz','kUzg','drukTotal','pA4bw','pA4kol','pA3','pWF','pBind','pKurier','pSkan'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='0'});
+  document.getElementById('nazwaProj').value='';
+  document.getElementById('klient').value='';
+  document.getElementById('miasto').value='';
+  document.getElementById('drukTotal').value='0';
+  document.getElementById('nObj').value='1';
+  document.getElementById('nGest').value='1';
+  document.getElementById('marz').value='30';
+  document.getElementById('minC').value='2000';
+  document.getElementById('pEgz').value='1';
+  document.getElementById('pA4bwC').value='0.30';
+  document.getElementById('pA4kolC').value='1.50';
+  document.getElementById('pA3C').value='2.50';
+  document.getElementById('pWFC').value='15.00';
+  document.getElementById('pBindC').value='8.00';
+  document.getElementById('km').value='100';
+  document.getElementById('wiz').value='2';
+  document.getElementById('tDoj').value='1.5';
+  document.querySelectorAll('.ci').forEach(el=>{el.classList.remove('active');el.querySelector('input').checked=false});
+  document.querySelectorAll('.tg').forEach(g=>{g.querySelectorAll('.tb').forEach(b=>b.classList.remove('active'));g.querySelector('.tb').classList.add('active')});
+  EXT.forEach(e=>{
+    const cb=document.getElementById('ec_'+e.id),inp=document.getElementById('ev_'+e.id),lbl=document.getElementById('el_'+e.id);
+    if(cb)cb.checked=false;if(inp){inp.value='0';inp.disabled=true}if(lbl)lbl.classList.remove('on');
+  });
+  Object.assign(S,{zloz:'prosta',strefa:'lok',pas:'nie',wt:'sa',gorn:'nie',zud:'tak',uzg:'nie',trud:'pro',druk:'rycz'});
+  document.getElementById('dF').style.display='none';
+  document.getElementById('uzgF').style.display='none';
+  document.getElementById('drukRycz').style.display='block';
+  document.getElementById('drukDet').style.display='none';
+  document.getElementById('ph').style.display='flex';
+  document.getElementById('res').style.display='none';
+  document.getElementById('topSt').textContent='Wypełnij i oblicz';
+  lastCalc=null;
+}
+
+buildExt();
 </script>
 </body>
 </html>
