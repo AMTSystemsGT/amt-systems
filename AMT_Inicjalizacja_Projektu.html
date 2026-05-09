@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="pl" xmlns:mso="urn:schemas-microsoft-com:office:office" xmlns:msdt="uuid:C2F41010-65B3-11d1-A29F-00AA00C14882">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AMT Systems — Nowy projekt</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-msal-browser/3.26.1/msal-browser.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:#f3f2f1;color:#323130;min-height:100vh}
+.topbar{background:#0078d4;color:#fff;padding:0 24px;height:44px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.topbar-l{display:flex;align-items:center;gap:10px}
+.topbar-title{font-size:14px;font-weight:600}
+.topbar-sub{font-size:11px;opacity:.65}
+.topbar-r{display:flex;align-items:center;gap:10px;font-size:12px}
+.av{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex-shrink:0}
+.login-screen{display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 44px)}
+.login-card{background:#fff;border:1px solid #edebe9;border-radius:4px;padding:48px 40px;text-align:center;max-width:360px;width:100%;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.login-card h2{font-size:20px;font-weight:700;margin-bottom:8px;color:#0078d4}
+.login-card p{font-size:13px;color:#605e5c;margin-bottom:28px;line-height:1.5}
+.ms-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:11px 20px;background:#0078d4;color:#fff;border:none;border-radius:2px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
+.ms-btn:hover{background:#106ebe}
+.ms-btn:disabled{background:#c8c6c4;cursor:not-allowed}
+.ms-logo{display:grid;grid-template-columns:1fr 1fr;gap:2px;width:16px;height:16px;flex-shrink:0}
+.ms-logo span:nth-child(1){background:#f25022}
+.ms-logo span:nth-child(2){background:#7fba00}
+.ms-logo span:nth-child(3){background:#00a4ef}
+.ms-logo span:nth-child(4){background:#ffb900}
+.container{max-width:800px;margin:0 auto;padding:24px 16px 60px}
+.card{background:#fff;border:1px solid #edebe9;border-radius:4px;padding:18px 20px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.sl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#9a9a8e;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.sl::after{content:'';flex:1;height:1px;background:#edebe9}
+.nr-box{display:flex;align-items:center;gap:10px;padding:8px 14px;background:#e8f4ff;border:1px solid #0078d4;border-radius:2px;min-height:38px}
+.nr-val{font-weight:700;font-size:14px;color:#0078d4;font-family:'Courier New',monospace;flex:1;word-break:break-all}
+.nr-ph{color:#a19f9d;font-weight:400;font-size:12px;font-family:'Segoe UI',sans-serif;font-style:italic}
+.nr-hint{font-size:11px;color:#a19f9d;margin-top:5px}
+.f{margin-bottom:12px}
+.f:last-child{margin-bottom:0}
+.f label{display:block;font-size:11px;font-weight:600;color:#605e5c;margin-bottom:4px}
+.req{color:#a4262c}
+.f input,.f select{width:100%;border:1px solid #8a8886;border-radius:2px;padding:6px 10px;font-size:13px;font-family:inherit;color:#323130;background:#fff;height:32px}
+.f input:focus,.f select:focus{outline:none;border-color:#0078d4;box-shadow:0 0 0 1px #0078d4}
+.hint{font-size:11px;color:#a19f9d;margin-top:3px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.search-wrap{position:relative}
+.s-icon{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:#605e5c;font-size:13px;pointer-events:none}
+.s-inp{padding-left:28px !important}
+.s-dd{border:1px solid #edebe9;border-top:none;background:#fff;border-radius:0 0 2px 2px;display:none;max-height:220px;overflow-y:auto;position:relative;z-index:10}
+.s-item{padding:8px 12px;cursor:pointer;border-bottom:1px solid #f3f2f1;display:flex;align-items:center;gap:8px;font-size:13px}
+.s-item:last-child{border-bottom:none}
+.s-item:hover{background:#f3f2f1}
+.si-av{width:24px;height:24px;border-radius:50%;background:#0078d4;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.si-name{flex:1;font-weight:600}
+.si-type{font-size:11px;color:#605e5c}
+.s-new{padding:8px 12px;color:#0078d4;cursor:pointer;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;border-top:1px solid #edebe9}
+.s-new:hover{background:#f0f6ff}
+.s-empty{padding:10px 12px;color:#a19f9d;font-size:12px;font-style:italic}
+.kl-sel{display:none;align-items:center;gap:8px;padding:6px 10px;background:#dff6dd;border:1px solid #90d4a8;border-radius:2px;font-size:13px;font-weight:600;color:#107c10;margin-top:6px}
+.kl-x{margin-left:auto;cursor:pointer;font-size:18px;line-height:1;color:#107c10}
+.nkb{display:none;background:#fff9f0;border:1px solid #f0c060;border-radius:2px;padding:14px 16px;margin-top:8px}
+.nkb-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#8a5a00;margin-bottom:12px}
+.team-wrap{display:flex;flex-wrap:wrap;gap:5px;padding:5px 8px;border:1px solid #8a8886;border-radius:2px;min-height:36px;background:#fff;cursor:text;align-items:center}
+.team-wrap:focus-within{border-color:#0078d4;box-shadow:0 0 0 1px #0078d4}
+.chip{display:flex;align-items:center;gap:4px;background:#deecf9;border-radius:12px;padding:2px 10px 2px 6px;font-size:12px;color:#004e8c;font-weight:600}
+.chip-av{width:18px;height:18px;border-radius:50%;background:#0078d4;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.chip-x{cursor:pointer;color:#004e8c;font-size:15px;line-height:1;margin-left:2px}
+.chip-x:hover{color:#a4262c}
+.team-inp{border:none;outline:none;font-size:13px;font-family:inherit;min-width:130px;background:transparent;color:#323130;height:24px}
+.btn{padding:8px 20px;border-radius:2px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid transparent;font-family:inherit;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:#0078d4;color:#fff;border-color:#0078d4}
+.btn-primary:hover{background:#106ebe}
+.btn-ghost{background:#fff;color:#605e5c;border-color:#c8c6c4}
+.btn-ghost:hover{border-color:#a4262c;color:#a4262c}
+.btn-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.alert{padding:10px 14px;border-radius:2px;font-size:13px;display:flex;align-items:flex-start;gap:8px}
+.a-err{background:#fde7e9;border:1px solid #e8a0a0;color:#a4262c;flex-direction:column}
+.a-ok{background:#dff6dd;border:1px solid #90d4a8;color:#107c10}
+.steps{display:flex;flex-direction:column;gap:6px}
+.step{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:2px;font-size:13px;border:1px solid transparent;transition:all .2s}
+.sw{color:#a19f9d;background:#faf9f8;border-color:#f3f2f1}
+.sa{color:#0078d4;font-weight:600;background:#f0f6ff;border-color:#b0d0f0}
+.sd{color:#107c10;background:#f0fff4;border-color:#90d4a8}
+.se{color:#a4262c;background:#fde7e9;border-color:#e8a0a0}
+.step-icon{width:22px;text-align:center;font-size:15px;flex-shrink:0}
+.step-lbl{flex:1}
+.step-sub{font-size:11px;color:#a19f9d;font-family:'Courier New',monospace;margin-left:auto;max-width:200px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sa .step-sub{color:#0078d4}
+.sd .step-sub{color:#107c10}
+.pb-wrap{height:5px;background:#edebe9;border-radius:3px;overflow:hidden;margin-top:12px}
+.pb-fill{height:100%;background:#0078d4;border-radius:3px;transition:width .4s}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:14px;height:14px;border:2px solid rgba(0,120,212,.3);border-top-color:#0078d4;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@media(max-width:600px){.row2,.row3{grid-template-columns:1fr}}
+</style>
+
+<!--[if gte mso 9]><xml>
+<mso:CustomDocumentProperties>
+<mso:_ApprovalStatus msdt:dt="string">0</mso:_ApprovalStatus>
+<mso:_ApprovalAssignedTo msdt:dt="string"></mso:_ApprovalAssignedTo>
+<mso:_ApprovalRespondedBy msdt:dt="string"></mso:_ApprovalRespondedBy>
+<mso:_ApprovalSentBy msdt:dt="string"></mso:_ApprovalSentBy>
+</mso:CustomDocumentProperties>
+</xml><![endif]-->
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-l">
+    <span class="topbar-title">AMT Systems</span>
+    <span class="topbar-sub">| Nowy projekt</span>
+  </div>
+  <div class="topbar-r">
+    <span id="topName" style="display:none"></span>
+    <div class="av" id="topAv" style="display:none"></div>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div id="loginScreen" class="login-screen">
+  <div class="login-card">
+    <h2>Nowy projekt</h2>
+    <p>Zaloguj się kontem Microsoft 365, aby dodać projekt do systemu AMT Systems.</p>
+    <button class="ms-btn" id="loginBtn" onclick="loginUser()" disabled>
+      <div class="ms-logo"><span></span><span></span><span></span><span></span></div>
+      Zaloguj przez Microsoft
+    </button>
+    <div id="loginErr" style="display:none;margin-top:14px" class="alert a-err"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appView" style="display:none">
+<div class="container">
+
+  <div class="card">
+    <div class="sl">Nr zadania — generowany automatycznie</div>
+    <div class="nr-box">
+      <span style="font-size:18px;flex-shrink:0">📋</span>
+      <div class="nr-val" id="nrPreview"><span class="nr-ph">Uzupełnij pola poniżej…</span></div>
+    </div>
+    <div class="nr-hint">Format: [Rok]_[Nr]_[Typ]_[Miejscowość]_[Klient] — tylko znaki ASCII</div>
+  </div>
+
+  <div id="formView">
+
+    <div class="card">
+      <div class="sl">Dane podstawowe</div>
+      <div class="row3" style="margin-bottom:12px">
+        <div class="f" style="margin-bottom:0">
+          <label>Rok <span class="req">*</span></label>
+          <select id="fRok" onchange="updateNr()">
+            <option>2026</option><option>2025</option><option>2027</option>
+          </select>
+        </div>
+        <div class="f" style="margin-bottom:0">
+          <label>Nr porządkowy <span class="req">*</span></label>
+          <input type="number" id="fNr" placeholder="np. 13" min="1" max="999" oninput="updateNr()">
+          <div class="hint" id="nrHint">Pobieranie…</div>
+        </div>
+        <div class="f" style="margin-bottom:0">
+          <label>Termin zakończenia</label>
+          <input type="date" id="fTermin">
+        </div>
+      </div>
+      <div class="row2" style="margin-bottom:12px">
+        <div class="f" style="margin-bottom:0">
+          <label>Rodzaj projektu <span class="req">*</span></label>
+          <select id="fRodzaj" onchange="updateNr()">
+            <option value="">— wybierz —</option>
+            <option value="GAZi">GAZi_instalacja gazowa</option>
+            <option value="GAZp">GAZp_przyłącze gazowe</option>
+            <option value="Wp">Wp_przyłącze wodociągowe</option>
+            <option value="KSp">KSp_przyłącze kanalizacji sanitarnej</option>
+            <option value="WKSp">WKSp_przyłącze wod. i kanal. san.</option>
+            <option value="KDp">KDp_przyłącze kanalizacji deszczowej</option>
+            <option value="KSs">KSs_sieć kanalizacji sanitarnej</option>
+            <option value="Ws">Ws_sieć wodociągowa</option>
+            <option value="WKSs">WKSs_sieć wod-kan</option>
+            <option value="Sp">Sp_sieci W, KS, KD wraz z przyłączami</option>
+            <option value="COs">COs_Sieci cieplne</option>
+            <option value="COp">COp_przyłącza cieplne</option>
+            <option value="PFU">PFU</option>
+            <option value="INSw">Instalacje wewnętrzne</option>
+            <option value="Inne">Inne</option>
+          </select>
+        </div>
+        <div class="f" style="margin-bottom:0">
+          <label>Status</label>
+          <select id="fStatus">
+            <option>W przygotowaniu</option>
+            <option>W realizacji</option>
+            <option>Zakończony</option>
+            <option>Wstrzymany</option>
+          </select>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="f" style="margin-bottom:0">
+          <label>Miejscowość <span class="req">*</span></label>
+          <input type="text" id="fMiasto" placeholder="np. Katowice" oninput="updateNr()">
+        </div>
+        <div class="f" style="margin-bottom:0">
+          <label>Ulica / rejon</label>
+          <input type="text" id="fUlica" placeholder="np. ul. Paderewskiego">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sl">Klient</div>
+      <div class="f">
+        <label>Wyszukaj klienta <span class="req">*</span></label>
+        <div class="search-wrap">
+          <span class="s-icon">🔍</span>
+          <input type="text" id="klSearch" class="s-inp" placeholder="Wpisz nazwę firmy lub instytucji…" oninput="onKlSearch(this.value)" autocomplete="off">
+        </div>
+        <div id="klDd" class="s-dd"></div>
+        <div id="klSel" class="kl-sel">
+          <span>✓</span>
+          <span id="klSelName"></span>
+          <span class="kl-x" onclick="clearKlient()">×</span>
+        </div>
+      </div>
+      <div id="nkBox" class="nkb">
+        <div class="nkb-title">➕ Nowy klient — zostanie dodany do Bazy klientów</div>
+        <div class="row2" style="margin-bottom:10px">
+          <div class="f" style="margin-bottom:0">
+            <label>Nazwa firmy / instytucji <span class="req">*</span></label>
+            <input type="text" id="nkNazwa" placeholder="pełna nazwa">
+          </div>
+          <div class="f" style="margin-bottom:0">
+            <label>Typ klienta <span class="req">*</span></label>
+            <select id="nkTyp">
+              <option value="">— wybierz —</option>
+              <option>Gmina_Miasto</option><option>Gestor_sieci</option>
+              <option>Architekci</option><option>Klient indywidualny</option>
+              <option>Deweloper</option><option>Firma prywatna</option>
+              <option>Wspólnoty</option><option>Drogowa - projektowa</option>
+              <option>Kolejowa - projektowa</option><option>Inne</option>
+            </select>
+          </div>
+        </div>
+        <div class="row3">
+          <div class="f" style="margin-bottom:0"><label>NIP</label><input type="text" id="nkNip" placeholder="000-000-00-00"></div>
+          <div class="f" style="margin-bottom:0"><label>Osoba kontaktowa</label><input type="text" id="nkOsoba" placeholder="Imię i nazwisko"></div>
+          <div class="f" style="margin-bottom:0"><label>Email</label><input type="text" id="nkEmail" placeholder="email@firma.pl"></div>
+        </div>
+      </div>
+      <div class="f" style="margin-top:12px">
+        <label>Skrócona nazwa klienta <span class="req">*</span></label>
+        <input type="text" id="fKlSkr" placeholder="np. Kowalski" oninput="updateNr()" maxlength="24">
+        <div class="hint">Tylko ASCII, bez spacji — wchodzi do Nr zadania</div>
+      </div>
+      <div class="row2">
+        <div class="f" style="margin-bottom:0"><label>Nazwa inwestycji</label><input type="text" id="fNazwaInw" placeholder="np. Budowa przyłącza wod.…"></div>
+        <div class="f" style="margin-bottom:0"><label>Nr działki</label><input type="text" id="fDzialka" placeholder="np. 1234/5"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sl">Zespół projektowy</div>
+      <div class="f">
+        <label>Kierownik projektu</label>
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:#f3f2f1;border:1px solid #c8c6c4;border-radius:2px;height:32px">
+          <div class="chip-av" id="kierAv">GT</div>
+          <span id="kierName" style="font-size:13px;font-weight:600"></span>
+          <span style="font-size:11px;color:#605e5c;margin-left:4px">(domyślnie zalogowany)</span>
+        </div>
+      </div>
+      <div class="f" style="margin-bottom:0">
+        <label>Członkowie zespołu</label>
+        <div class="team-wrap" id="teamWrap" onclick="document.getElementById('teamInp').focus()">
+          <input class="team-inp" id="teamInp" type="text" placeholder="Dodaj osobę (imię, nazwisko lub email)…" oninput="onTeamSearch(this.value)" onkeydown="onTeamKey(event)">
+        </div>
+        <div id="teamDd" class="s-dd" style="margin-top:0"></div>
+        <div class="hint">Osoby otrzymają email i skrót w OneDrive</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="formErr" style="display:none;margin-bottom:12px"></div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="resetForm()">Wyczyść formularz</button>
+        <button class="btn btn-primary" onclick="submitForm()">🚀 Utwórz projekt i inicjalizuj</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="card" id="progressCard" style="display:none">
+    <div class="sl">Inicjalizacja projektu</div>
+    <div id="progressNr" style="font-weight:700;font-size:14px;color:#0078d4;font-family:'Courier New',monospace;margin-bottom:14px"></div>
+    <div class="steps" id="stepsEl"></div>
+    <div class="pb-wrap"><div class="pb-fill" id="pbFill" style="width:0%"></div></div>
+    <div style="font-size:11px;color:#a19f9d;text-align:right;margin-top:4px" id="pbPct">0%</div>
+    <div id="progressAlert" style="margin-top:12px"></div>
+  </div>
+
+  <div class="card" id="successCard" style="display:none">
+    <div class="sl">Projekt gotowy</div>
+    <div class="alert a-ok" style="margin-bottom:14px;flex-direction:column;align-items:flex-start;gap:6px">
+      <strong>✅ Projekt został w pełni zainicjalizowany!</strong>
+      <span>Wszyscy członkowie zespołu otrzymali powiadomienie email i mają skrót w OneDrive.</span>
+    </div>
+    <div id="successDetails" style="font-size:13px;line-height:1.9;margin-bottom:16px"></div>
+    <div class="btn-row">
+      <a id="linkProjekt" href="#" target="_blank" class="btn btn-primary" style="text-decoration:none">🔗 Otwórz witrynę projektu</a>
+      <button class="btn btn-ghost" onclick="nowyProjekt()">+ Nowy projekt</button>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+const CFG = {
+  clientId:   '20b270f3-cac0-44b4-aa38-1ed8e7169ad3',
+  tenantId:   'e0d401cd-2f0f-4797-8794-e4dea94010cc',
+  redirectUri:'https://agreeable-plant-0f7fa3903.7.azurestaticapps.net/AMT_Inicjalizacja_Projektu.html',
+  spHost:     'amtsystemspl.sharepoint.com',
+  zlecenia:   'sites/Zlecenia',
+  listProj:   'Projekty 2025',
+  listKl:     'Baza klientów',
+};
+const G = 'https://graph.microsoft.com/v1.0';
+const SCOPES = ['Files.ReadWrite.All','Sites.ReadWrite.All','User.Read','Mail.Send'];
+
+const FOLDERS = [
+  '!UKLAD_FOLDEROW_Sharepoint',
+  '!UKLAD_FOLDEROW_Sharepoint/00_Materialy_wejsciowe',
+  '!UKLAD_FOLDEROW_Sharepoint/00_Materialy_wejsciowe/01_Mapy',
+  '!UKLAD_FOLDEROW_Sharepoint/00_Materialy_wejsciowe/02_Warunki_techniczne_opinie',
+  '!UKLAD_FOLDEROW_Sharepoint/00_Materialy_wejsciowe/03_Wypisy_z_rejestru_gruntow',
+  '!UKLAD_FOLDEROW_Sharepoint/00_Materialy_wejsciowe/04_Pelnomocnictwa',
+  '!UKLAD_FOLDEROW_Sharepoint/00_Materialy_wejsciowe/05_Umowy_zlecenia',
+  '!UKLAD_FOLDEROW_Sharepoint/00_Materialy_wejsciowe/06_Wizja_lokalna',
+  '!UKLAD_FOLDEROW_Sharepoint/00_Materialy_wejsciowe/07_Notatki_spotkania_ustalenia',
+  '!UKLAD_FOLDEROW_Sharepoint/00_Materialy_wejsciowe/08_Materialy_od_Inwestora_Klienta',
+  '!UKLAD_FOLDEROW_Sharepoint/01_Sprawy',
+  '!UKLAD_FOLDEROW_Sharepoint/01_Sprawy/DEC_Decyzje_administracyjne',
+  '!UKLAD_FOLDEROW_Sharepoint/01_Sprawy/TER_Zgody_terenowe',
+  '!UKLAD_FOLDEROW_Sharepoint/01_Sprawy/UZ_Uzgodnienia',
+  '!UKLAD_FOLDEROW_Sharepoint/01_Sprawy/WN_Wnioski',
+  '!UKLAD_FOLDEROW_Sharepoint/01_Sprawy/WT_Warunki_techniczne',
+  '!UKLAD_FOLDEROW_Sharepoint/02_Dokumentacja_projektowa',
+  '!UKLAD_FOLDEROW_Sharepoint/02_Dokumentacja_projektowa/2.1_Projekt_techniczny',
+  '!UKLAD_FOLDEROW_Sharepoint/02_Dokumentacja_projektowa/2.1_Projekt_techniczny/!Wersja_PDF',
+  '!UKLAD_FOLDEROW_Sharepoint/02_Dokumentacja_projektowa/2.1_Projekt_techniczny/!xref',
+  '!UKLAD_FOLDEROW_Sharepoint/02_Dokumentacja_projektowa/2.1_Projekt_techniczny/Dobory',
+  '!UKLAD_FOLDEROW_Sharepoint/02_Dokumentacja_projektowa/2.1_Projekt_techniczny/Koordynator',
+  '!UKLAD_FOLDEROW_Sharepoint/02_Dokumentacja_projektowa/2.1_Projekt_techniczny/Obliczenia',
+  '!UKLAD_FOLDEROW_Sharepoint/02_Dokumentacja_projektowa/2.1_Projekt_techniczny/Old',
+  '!UKLAD_FOLDEROW_Sharepoint/02_Dokumentacja_projektowa/2.2_Dokumentacja_do_urzedu',
+  '!UKLAD_FOLDEROW_Sharepoint/02_Dokumentacja_projektowa/2.2_Dokumentacja_do_urzedu/!Wersja_PDF',
+  '!UKLAD_FOLDEROW_Sharepoint/02_Dokumentacja_projektowa/2.2_Dokumentacja_do_urzedu/Wnioski_druki',
+];
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let msalInst = null, currentAcc = null, currentUser = {};
+let siteId = null, listProjId = null, listKlId = null;
+let selectedKlient = null, teamMembers = [], stepDefs = [];
+
+// ─── MSAL INIT ────────────────────────────────────────────────────────────────
+// KLUCZOWA POPRAWKA: init() musi w pełni zakończyć się zanim przycisk loginRedirect
+// jest dostępny. Dlatego przycisk startuje jako disabled i włącza się po init().
+async function init() {
+  try {
+    msalInst = new msal.PublicClientApplication({
+      auth:{
+        clientId: CFG.clientId,
+        authority: `https://login.microsoftonline.com/${CFG.tenantId}`,
+        redirectUri: CFG.redirectUri
+      },
+      cache:{ cacheLocation:'sessionStorage', storeAuthStateInCookie:false }
+    });
+
+    await msalInst.initialize();
+
+    // Obsłuż powrót z redirect PRZED udostępnieniem przycisku
+    const resp = await msalInst.handleRedirectPromise();
+    if (resp && resp.account) {
+      currentAcc = resp.account;
+    } else {
+      const accounts = msalInst.getAllAccounts();
+      if (accounts.length > 0) currentAcc = accounts[0];
+    }
+
+    if (currentAcc) {
+      showApp();
+    } else {
+      // Dopiero teraz przycisk logowania jest bezpieczny
+      document.getElementById('loginBtn').disabled = false;
+    }
+  } catch(e) {
+    const errEl = document.getElementById('loginErr');
+    errEl.textContent = '❌ Błąd inicjalizacji MSAL: ' + e.message;
+    errEl.style.display = 'flex';
+    console.error('MSAL init error:', e);
+  }
+}
+
+async function loginUser() {
+  if (!msalInst) return;
+  try {
+    document.getElementById('loginBtn').disabled = true;
+    await msalInst.loginRedirect({ scopes: SCOPES, prompt: 'select_account' });
+  } catch(e) {
+    const errEl = document.getElementById('loginErr');
+    errEl.textContent = '❌ ' + e.message;
+    errEl.style.display = 'flex';
+    document.getElementById('loginBtn').disabled = false;
+  }
+}
+
+async function tok() {
+  try {
+    return (await msalInst.acquireTokenSilent({ scopes:SCOPES, account:currentAcc })).accessToken;
+  } catch {
+    return (await msalInst.acquireTokenPopup({ scopes:SCOPES })).accessToken;
+  }
+}
+
+// ─── SHOW APP ─────────────────────────────────────────────────────────────────
+async function showApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appView').style.display = 'block';
+
+  const name = currentAcc.name || currentAcc.username;
+  const ini  = name.split(' ').filter(Boolean).map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  currentUser = { name, email: currentAcc.username, ini };
+
+  document.getElementById('topName').textContent = name.split(' ')[0];
+  document.getElementById('topName').style.display = '';
+  document.getElementById('topAv').textContent = ini;
+  document.getElementById('topAv').style.display = '';
+  document.getElementById('kierName').textContent = name;
+  document.getElementById('kierAv').textContent = ini;
+
+  await loadIds();
+  await suggestNr();
+}
+
+async function loadIds() {
+  try {
+    const t = await tok();
+    const sr = await gf(`${G}/sites/${CFG.spHost}:/${CFG.zlecenia}`, t);
+    siteId = sr.id;
+    const lr = await gf(`${G}/sites/${siteId}/lists?$select=id,displayName`, t);
+    for (const l of lr.value||[]) {
+      if (l.displayName === CFG.listProj) listProjId = l.id;
+      if (l.displayName === CFG.listKl)  listKlId   = l.id;
+    }
+  } catch(e) { console.error('loadIds:', e); }
+}
+
+async function suggestNr() {
+  if (!listProjId) { document.getElementById('nrHint').textContent = 'Nie można pobrać listy'; return; }
+  try {
+    const t = await tok();
+    const d = await gf(`${G}/sites/${siteId}/lists/${listProjId}/items?$expand=fields($select=Nr_porzadkowy)&$top=500`, t);
+    const nrs = (d.value||[]).map(i=>parseInt(i.fields?.Nr_porzadkowy||0)).filter(n=>n>0);
+    const next = nrs.length ? Math.max(...nrs)+1 : 1;
+    document.getElementById('nrHint').textContent = `Kolejny wolny: ${String(next).padStart(3,'0')}`;
+    document.getElementById('fNr').placeholder = String(next);
+  } catch { document.getElementById('nrHint').textContent = 'Nie można pobrać numeru'; }
+}
+
+// ─── NR ZADANIA ───────────────────────────────────────────────────────────────
+function ascii(s) {
+  return (s||'').replace(/[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/g, c=>
+    ({ą:'a',ć:'c',ę:'e',ł:'l',ń:'n',ó:'o',ś:'s',ź:'z',ż:'z',
+      Ą:'A',Ć:'C',Ę:'E',Ł:'L',Ń:'N',Ó:'O',Ś:'S',Ź:'Z',Ż:'Z'}[c]||c)
+  ).replace(/[^a-zA-Z0-9]/g,'').trim();
+}
+
+function updateNr() {
+  const rok=v('fRok'), nr=v('fNr'), rodzaj=v('fRodzaj');
+  const miasto=ascii(v('fMiasto')), kl=ascii(v('fKlSkr'));
+  const nrP = nr ? String(parseInt(nr)).padStart(3,'0') : '';
+  const parts = [rok,nrP,rodzaj,miasto,kl].filter(Boolean);
+  const el = document.getElementById('nrPreview');
+  el.innerHTML = parts.length >= 3
+    ? esc(parts.join('_'))
+    : '<span class="nr-ph">Uzupełnij pola poniżej…</span>';
+}
+
+function getNr() {
+  return [v('fRok'), String(parseInt(v('fNr'))).padStart(3,'0'), v('fRodzaj'), ascii(v('fMiasto')), ascii(v('fKlSkr'))].join('_');
+}
+
+// ─── KLIENT ───────────────────────────────────────────────────────────────────
+let klTimer;
+function onKlSearch(val) {
+  clearTimeout(klTimer);
+  const dd = document.getElementById('klDd');
+  if (val.length < 2) { dd.style.display='none'; return; }
+  klTimer = setTimeout(()=>searchKl(val), 350);
+}
+
+async function searchKl(val) {
+  const dd = document.getElementById('klDd');
+  dd.innerHTML = '<div class="s-empty">⏳ Szukam…</div>';
+  dd.style.display = 'block';
+  try {
+    const t = await tok();
+    const d = await gf(`${G}/sites/${siteId}/lists/${listKlId}/items?$expand=fields($select=Title,Typ_klienta)&$top=50`, t);
+    const items = (d.value||[]).filter(i=>(i.fields?.Title||'').toLowerCase().includes(val.toLowerCase()));
+    dd.innerHTML = '';
+    items.forEach(item => {
+      const f=item.fields||{}, nazwa=f.Title||'', typ=f.Typ_klienta||'';
+      const ini=nazwa.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+      const div=document.createElement('div');
+      div.className='s-item';
+      div.innerHTML=`<div class="si-av">${esc(ini)}</div><span class="si-name">${esc(nazwa)}</span><span class="si-type">${esc(typ)}</span>`;
+      div.onclick=()=>selectKlient({id:item.id,nazwa,typ});
+      dd.appendChild(div);
+    });
+    if (!items.length) dd.innerHTML='<div class="s-empty">Brak wyników w bazie</div>';
+    const nd=document.createElement('div');
+    nd.className='s-new';
+    nd.innerHTML=`➕ Dodaj nowego klienta: "<strong>${esc(val)}</strong>"`;
+    nd.onclick=()=>{ dd.style.display='none'; showNkBox(val); };
+    dd.appendChild(nd);
+  } catch(e) { dd.innerHTML=`<div class="s-empty">❌ ${esc(e.message)}</div>`; }
+}
+
+function selectKlient(k) {
+  selectedKlient=k;
+  document.getElementById('klDd').style.display='none';
+  document.getElementById('klSearch').value='';
+  document.getElementById('nkBox').style.display='none';
+  document.getElementById('klSelName').textContent=k.nazwa;
+  document.getElementById('klSel').style.display='flex';
+  if (!v('fKlSkr')) {
+    document.getElementById('fKlSkr').value=ascii(k.nazwa.split(/[\s,]+/).pop()||'').substring(0,24);
+    updateNr();
+  }
+}
+
+function clearKlient() {
+  selectedKlient=null;
+  document.getElementById('klSel').style.display='none';
+  document.getElementById('klSearch').value='';
+  document.getElementById('nkBox').style.display='none';
+}
+
+function showNkBox(val) {
+  document.getElementById('nkBox').style.display='block';
+  document.getElementById('nkNazwa').value=val;
+  if (!v('fKlSkr')) {
+    document.getElementById('fKlSkr').value=ascii(val.split(/[\s,]+/).pop()||'').substring(0,24);
+    updateNr();
+  }
+  document.getElementById('nkBox').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ─── TEAM ─────────────────────────────────────────────────────────────────────
+let teamTimer;
+function onTeamSearch(val) {
+  clearTimeout(teamTimer);
+  const dd=document.getElementById('teamDd');
+  if (val.length<2){dd.style.display='none';return;}
+  teamTimer=setTimeout(()=>searchUsers(val),350);
+}
+
+async function searchUsers(val) {
+  const dd=document.getElementById('teamDd');
+  dd.innerHTML='<div class="s-empty">⏳ Szukam…</div>';
+  dd.style.display='block';
+  try {
+    const t=await tok();
+    const enc=encodeURIComponent(val);
+    const d=await gf(`${G}/users?$filter=startswith(displayName,'${enc}') or startswith(mail,'${enc}')&$select=id,displayName,mail,userPrincipalName&$top=8`,t);
+    const users=(d.value||[]).filter(u=>!teamMembers.find(m=>m.id===u.id));
+    dd.innerHTML='';
+    if(!users.length){dd.innerHTML='<div class="s-empty">Brak wyników</div>';return;}
+    users.forEach(u=>{
+      const ini=u.displayName.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+      const div=document.createElement('div');
+      div.className='s-item';
+      div.innerHTML=`<div class="si-av">${esc(ini)}</div><span class="si-name">${esc(u.displayName)}</span><span class="si-type">${esc(u.mail||u.userPrincipalName)}</span>`;
+      div.onclick=()=>addMember(u);
+      dd.appendChild(div);
+    });
+  } catch(e){dd.innerHTML=`<div class="s-empty">❌ ${esc(e.message)}</div>`;}
+}
+
+function addMember(u) {
+  if(teamMembers.find(m=>m.id===u.id))return;
+  teamMembers.push(u); renderChips();
+  document.getElementById('teamInp').value='';
+  document.getElementById('teamDd').style.display='none';
+}
+
+function removeMember(id) { teamMembers=teamMembers.filter(m=>m.id!==id); renderChips(); }
+
+function renderChips() {
+  const wrap=document.getElementById('teamWrap');
+  const inp=document.getElementById('teamInp');
+  wrap.innerHTML='';
+  teamMembers.forEach(m=>{
+    const ini=m.displayName.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    const chip=document.createElement('div');
+    chip.className='chip';
+    chip.innerHTML=`<div class="chip-av">${esc(ini)}</div>${esc(m.displayName)}<span class="chip-x" onclick="removeMember('${m.id}')">×</span>`;
+    wrap.appendChild(chip);
+  });
+  wrap.appendChild(inp);
+}
+
+function onTeamKey(e){ if(e.key==='Escape') document.getElementById('teamDd').style.display='none'; }
+
+// ─── VALIDATE ─────────────────────────────────────────────────────────────────
+function validate() {
+  const errs=[];
+  if(!v('fNr')) errs.push('Nr porządkowy jest wymagany');
+  if(!v('fRodzaj')) errs.push('Rodzaj projektu jest wymagany');
+  if(!v('fMiasto').trim()) errs.push('Miejscowość jest wymagana');
+  if(!v('fKlSkr').trim()) errs.push('Skrócona nazwa klienta jest wymagana');
+  const nkVis=document.getElementById('nkBox').style.display!=='none';
+  if(!selectedKlient && !nkVis) errs.push('Wybierz klienta z listy lub dodaj nowego');
+  if(nkVis && !v('nkNazwa').trim()) errs.push('Podaj nazwę nowego klienta');
+  if(nkVis && !v('nkTyp')) errs.push('Wybierz typ nowego klienta');
+  return errs;
+}
+
+// ─── SUBMIT ───────────────────────────────────────────────────────────────────
+async function submitForm() {
+  const errs=validate();
+  const errEl=document.getElementById('formErr');
+  if(errs.length){
+    errEl.innerHTML=`<div class="alert a-err"><strong>⚠️ Uzupełnij wymagane pola:</strong><ul style="margin-top:6px;padding-left:16px">${errs.map(e=>`<li>${esc(e)}</li>`).join('')}</ul></div>`;
+    errEl.style.display='block';
+    errEl.scrollIntoView({behavior:'smooth',block:'nearest'});
+    return;
+  }
+  errEl.style.display='none';
+
+  const nrZad=getNr();
+  document.getElementById('formView').style.display='none';
+  document.getElementById('progressCard').style.display='block';
+  document.getElementById('progressNr').textContent=nrZad;
+  document.getElementById('progressCard').scrollIntoView({behavior:'smooth'});
+
+  initSteps([
+    {id:'tok',  lbl:'Pobieranie tokenu autoryzacji',         sub:'MSAL'},
+    {id:'kl',   lbl:'Zapisywanie klienta',                   sub:'Baza klientów'},
+    {id:'lst',  lbl:'Dodawanie projektu do listy',           sub:CFG.listProj},
+    {id:'tm',   lbl:'Oczekiwanie na Teams (Power Automate)', sub:'polling co 10s, max 3 min'},
+    {id:'fld',  lbl:'Tworzenie struktury folderów',          sub:`${FOLDERS.length} folderów`},
+    {id:'odr',  lbl:'Dodawanie skrótów OneDrive',            sub:'dla członków zespołu'},
+    {id:'eml',  lbl:'Wysyłanie powiadomień email',           sub:''},
+    {id:'done', lbl:'Inicjalizacja zakończona',              sub:''},
+  ]);
+
+  try {
+    setS('tok','a'); const t=await tok(); setS('tok','d');
+
+    // KLIENT
+    setS('kl','a');
+    let klientId=selectedKlient?.id||null;
+    const nkVis=document.getElementById('nkBox').style.display!=='none';
+    if(!selectedKlient && nkVis) {
+      const nazwaK=v('nkNazwa').trim(), typK=v('nkTyp');
+      const kr=await fp(`${G}/sites/${siteId}/lists/${listKlId}/items`,t,
+        {fields:{Title:nazwaK,Typ_klienta:typK,NIP:v('nkNip')||'',Osoba_kontaktowa:v('nkOsoba')||'',Email:v('nkEmail')||''}});
+      klientId=kr.id; subS('kl',nazwaK);
+    } else { subS('kl',selectedKlient?.nazwa||'—'); }
+    setS('kl','d');
+
+    // LISTA
+    setS('lst','a');
+    const rodzaj=v('fRodzaj');
+    const fields={
+      Title:nrZad,
+      Rok:parseInt(v('fRok')),
+      Rodzaj_projektu:rodzaj,
+      Typ_projektu:rodzaj,
+      Status:v('fStatus'),
+      Miejscowosc:v('fMiasto').trim(),
+      Ulica_x002f_rejon:v('fUlica').trim(),
+      Nr_dzialki:v('fDzialka').trim(),
+      Nazwa_inwestycji:v('fNazwaInw').trim(),
+      Skrocona_nazwa_klienta:v('fKlSkr').trim(),
+      Nr_porzadkowy:String(parseInt(v('fNr'))).padStart(3,'0'),
+      Archiwum:false,
+    };
+    if(v('fTermin')) fields.Termin_zakonczenia_projektu=v('fTermin');
+    await fp(`${G}/sites/${siteId}/lists/${listProjId}/items`,t,{fields});
+    subS('lst',nrZad); setS('lst','d');
+
+    // POLLING TEAMS
+    setS('tm','a');
+    const projUrl=`https://${CFG.spHost}/sites/${nrZad}`;
+    let driveId=null;
+    for(let i=0;i<18;i++){
+      subS('tm',`próba ${i+1}/18…`);
+      await sleep(10000);
+      try{
+        const sr=await fetch(`${G}/sites/${CFG.spHost}:/sites/${nrZad}`,{headers:{Authorization:`Bearer ${t}`}});
+        if(sr.ok){
+          const sd=await sr.json();
+          const dr=await fetch(`${G}/sites/${sd.id}/drives`,{headers:{Authorization:`Bearer ${t}`}});
+          if(dr.ok){
+            const dd=await dr.json();
+            const drive=(dd.value||[]).find(d=>d.name==='Documents'||d.name==='Dokumenty')||(dd.value||[])[0];
+            if(drive){driveId=drive.id;break;}
+          }
+        }
+      }catch{}
+    }
+    if(!driveId) throw new Error('Teams nie odpowiedział po 3 minutach. Sprawdź Power Automate i spróbuj ponownie.');
+    subS('tm','✓ Teams gotowy'); setS('tm','d');
+
+    // FOLDERY
+    setS('fld','a');
+    let created=0,skipped=0;
+    for(let i=0;i<FOLDERS.length;i++){
+      const p=FOLDERS[i];
+      subS('fld',`[${i+1}/${FOLDERS.length}] ${p.split('/').pop()}`);
+      const res=await zapFolder(driveId,p,t);
+      res==='exists'?skipped++:created++;
+    }
+    subS('fld',`✓ ${created} nowych, ${skipped} istniało`); setS('fld','d');
+
+    // ONEDRIVE
+    setS('odr','a');
+    const meR=await fetch(`${G}/me?$select=id,displayName,mail`,{headers:{Authorization:`Bearer ${t}`}});
+    const meD=await meR.json();
+    const allM=[...teamMembers];
+    if(!allM.find(m=>m.id===meD.id)) allM.push(meD);
+    let skrOk=0;
+    for(const m of allM){
+      subS('odr',m.displayName);
+      try{
+        await fetch(`${G}/users/${m.id}/followedSites/add`,{
+          method:'POST',
+          headers:{Authorization:`Bearer ${t}`,'Content-Type':'application/json'},
+          body:JSON.stringify({value:[{id:siteId}]})
+        });
+        skrOk++;
+      }catch(e){console.warn('OneDrive',m.displayName,e);}
+    }
+    subS('odr',`✓ ${skrOk}/${allM.length} osób`); setS('odr','d');
+
+    // EMAIL
+    setS('eml','a');
+    const recipients=allM.filter(m=>m.mail||m.userPrincipalName);
+    const html=buildEmail({nrZad,rodzaj,miasto:v('fMiasto').trim(),nazwaInw:v('fNazwaInw').trim(),
+      klient:selectedKlient?.nazwa||v('nkNazwa').trim(),status:v('fStatus'),projUrl,sender:currentUser.name});
+    for(const m of recipients){
+      try{
+        await fetch(`${G}/me/sendMail`,{
+          method:'POST',
+          headers:{Authorization:`Bearer ${t}`,'Content-Type':'application/json'},
+          body:JSON.stringify({message:{
+            subject:`Nowy projekt: ${nrZad}`,
+            body:{contentType:'HTML',content:html},
+            toRecipients:[{emailAddress:{address:m.mail||m.userPrincipalName,name:m.displayName}}]
+          },saveToSentItems:false})
+        });
+      }catch(e){console.warn('email',m.displayName,e);}
+    }
+    subS('eml',`✓ ${recipients.length} powiadomień`); setS('eml','d');
+    setS('done','d'); setPb(100);
+
+    // SUKCES
+    document.getElementById('progressCard').style.display='none';
+    document.getElementById('successCard').style.display='block';
+    document.getElementById('successCard').scrollIntoView({behavior:'smooth'});
+    document.getElementById('linkProjekt').href=projUrl;
+    document.getElementById('successDetails').innerHTML=`
+      <strong>Nr zadania:</strong> ${esc(nrZad)}<br>
+      <strong>Rodzaj projektu:</strong> ${esc(rodzaj)}<br>
+      <strong>Miejscowość:</strong> ${esc(v('fMiasto'))}<br>
+      <strong>Foldery:</strong> ${created} nowych (${skipped} już istniało)<br>
+      <strong>Powiadomienia:</strong> ${recipients.length} osób`;
+
+  } catch(err) {
+    document.querySelectorAll('.sa').forEach(s=>{s.className='step se';s.querySelector('.step-icon').textContent='❌';});
+    document.getElementById('progressAlert').innerHTML=`<div class="alert a-err"><strong>❌ Błąd inicjalizacji</strong><span>${esc(err.message)}</span><button class="btn btn-ghost" onclick="wroc()" style="margin-top:8px">← Wróć do formularza</button></div>`;
+    console.error(err);
+  }
+}
+
+function wroc(){ document.getElementById('formView').style.display='block'; document.getElementById('progressCard').style.display='none'; }
+
+// ─── FOLDER ───────────────────────────────────────────────────────────────────
+async function zapFolder(driveId,path,t){
+  const enc=path.split('/').map(s=>encodeURIComponent(s)).join('/');
+  const ck=await fetch(`${G}/drives/${driveId}/root:/${enc}`,{headers:{Authorization:`Bearer ${t}`}});
+  if(ck.ok) return 'exists';
+  const parts=path.split('/'), name=parts.pop(), parent=parts.join('/');
+  let pid;
+  if(!parent){
+    const r=await fetch(`${G}/drives/${driveId}/root`,{headers:{Authorization:`Bearer ${t}`}});
+    pid=(await r.json()).id;
+  } else {
+    const encP=parent.split('/').map(s=>encodeURIComponent(s)).join('/');
+    const r=await fetch(`${G}/drives/${driveId}/root:/${encP}`,{headers:{Authorization:`Bearer ${t}`}});
+    pid=(await r.json()).id;
+  }
+  const cr=await fetch(`${G}/drives/${driveId}/items/${pid}/children`,{
+    method:'POST',headers:{Authorization:`Bearer ${t}`,'Content-Type':'application/json'},
+    body:JSON.stringify({name,folder:{}, '@microsoft.graph.conflictBehavior':'ignore'})
+  });
+  if(!cr.ok&&cr.status!==409) throw new Error(`Folder "${name}": ${cr.status}`);
+  return 'created';
+}
+
+// ─── EMAIL ────────────────────────────────────────────────────────────────────
+function buildEmail(d){
+  const row=(k,val)=>val?`<tr><td style="padding:9px 14px;font-weight:600;color:#605e5c;border-bottom:1px solid #edebe9;width:38%">${k}</td><td style="padding:9px 14px;border-bottom:1px solid #edebe9">${esc(val)}</td></tr>`:'';
+  return `<!DOCTYPE html><html><body style="font-family:'Segoe UI',sans-serif;font-size:14px;color:#323130;padding:20px;margin:0">
+<p>Dzień dobry,</p>
+<p>Informujemy o uruchomieniu nowego projektu w systemie AMT Systems — zainicjowanego przez <strong>${esc(d.sender)}</strong>.</p>
+<table style="width:100%;border-collapse:collapse;margin:20px 0">
+<thead><tr><th colspan="2" style="background:#0078d4;color:#fff;padding:10px 14px;text-align:left;font-size:14px">Szczegóły projektu</th></tr></thead>
+<tbody>
+<tr><td style="padding:9px 14px;font-weight:600;color:#605e5c;border-bottom:1px solid #edebe9;width:38%">Nr zadania</td><td style="padding:9px 14px;border-bottom:1px solid #edebe9;font-family:monospace;font-weight:700;color:#0078d4">${esc(d.nrZad)}</td></tr>
+${row('Rodzaj projektu',d.rodzaj)}${row('Miejscowość',d.miasto)}${row('Nazwa inwestycji',d.nazwaInw)}${row('Klient',d.klient)}${row('Status',d.status)}
+</tbody></table>
+<p>Witryna projektu: <a href="${esc(d.projUrl)}" style="color:#0078d4">${esc(d.projUrl)}</a></p>
+<p>Struktura folderów w SharePoint została automatycznie zainicjalizowana.<br>Skrót do witryny projektu jest dostępny w Twoim OneDrive.</p>
+<hr style="border:none;border-top:1px solid #edebe9;margin:20px 0">
+<p style="font-size:12px;color:#a19f9d">AMT Systems — System zarządzania projektami | Wiadomość automatyczna</p>
+</body></html>`;
+}
+
+// ─── PROGRESS ─────────────────────────────────────────────────────────────────
+function initSteps(defs){
+  stepDefs=defs;
+  const c=document.getElementById('stepsEl'); c.innerHTML='';
+  defs.forEach(s=>{
+    const d=document.createElement('div');
+    d.className='step sw'; d.id='st_'+s.id;
+    d.innerHTML=`<span class="step-icon">○</span><span class="step-lbl">${esc(s.lbl)}</span><span class="step-sub" id="sb_${s.id}">${esc(s.sub)}</span>`;
+    c.appendChild(d);
+  });
+  setPb(0);
+}
+
+function setS(id,state){
+  const el=document.getElementById('st_'+id); if(!el)return;
+  el.className='step '+(state==='a'?'sa':state==='d'?'sd':'se');
+  const ic=el.querySelector('.step-icon');
+  if(state==='a') ic.innerHTML='<span class="spinner"></span>';
+  else if(state==='d') ic.textContent='✅';
+  else ic.textContent='❌';
+  setPb(Math.round(document.querySelectorAll('.sd').length/stepDefs.length*100));
+}
+
+function subS(id,txt){ const el=document.getElementById('sb_'+id); if(el) el.textContent=txt; }
+function setPb(p){ document.getElementById('pbFill').style.width=p+'%'; document.getElementById('pbPct').textContent=p+'%'; }
+
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const v=id=>document.getElementById(id)?.value||'';
+
+async function gf(url,t){
+  const r=await fetch(url,{headers:{Authorization:`Bearer ${t}`}});
+  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(`${r.status} ${e?.error?.message||''}`);}
+  return r.json();
+}
+async function fp(url,t,body){
+  const r=await fetch(url,{method:'POST',headers:{Authorization:`Bearer ${t}`,'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(`${r.status} ${e?.error?.message||''}`);}
+  return r.json();
+}
+
+function resetForm(){
+  ['fNr','fMiasto','fUlica','fDzialka','fNazwaInw','fKlSkr','klSearch','nkNazwa','nkNip','nkOsoba','nkEmail','teamInp']
+    .forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('fRodzaj').value='';
+  document.getElementById('fStatus').selectedIndex=0;
+  document.getElementById('klSel').style.display='none';
+  document.getElementById('nkBox').style.display='none';
+  document.getElementById('klDd').style.display='none';
+  document.getElementById('formErr').style.display='none';
+  selectedKlient=null; teamMembers=[]; renderChips(); updateNr();
+}
+
+function nowyProjekt(){
+  document.getElementById('successCard').style.display='none';
+  document.getElementById('formView').style.display='block';
+  resetForm(); window.scrollTo({top:0,behavior:'smooth'});
+}
+
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#klSearch')&&!e.target.closest('#klDd')) document.getElementById('klDd').style.display='none';
+  if(!e.target.closest('#teamInp')&&!e.target.closest('#teamDd')) document.getElementById('teamDd').style.display='none';
+});
+
+// START — init() musi być pierwsze
+init();
+</script>
+</body>
+</html>
