@@ -1570,11 +1570,23 @@ function formatDatePL(d) {
   return `${dt.getDate()}.${String(dt.getMonth()+1).padStart(2,'0')}.${dt.getFullYear()}`;
 }
 
+async function loadJSZip() {
+  if (typeof JSZip !== 'undefined') return true;
+  return new Promise((resolve) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+    s.onload = () => resolve(true);
+    s.onerror = () => resolve(false);
+    document.head.appendChild(s);
+  });
+}
+
 async function generatePelnomocnictwo(t, projSiteId, nrZad, rodzaj) {
   // Typy które NIE wymagają pełnomocnictwa
   if (['INSw','Inne'].includes(rodzaj)) return;
   try {
-    if (typeof JSZip === 'undefined') {
+    const jszipOk = await loadJSZip();
+    if (!jszipOk || typeof JSZip === 'undefined') {
       console.warn('JSZip niedostępne — pomijam generowanie pełnomocnictwa');
       return;
     }
