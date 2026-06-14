@@ -1006,9 +1006,8 @@ async function submitForm() {
     // Pola Hyperlink pomijamy przy tworzeniu — Graph API wymaga specjalnego formatu
     // Linki trafiają do emaila i można je uzupełnić ręcznie w SharePoint
     // Dodaj role do fields
-  if(selectedProjektant) fields['ProjektantLookupId'] = selectedProjektant.id;
-  if(selectedAsystent)   fields['AsystentLookupId']   = selectedAsystent.id;
-  if(selectedKoordynator) fields['KoordynatorLookupId'] = selectedKoordynator.id;
+  // Role — pomijamy przy tworzeniu, wpisujemy ręcznie w SP lub przez PATCH po utworzeniu
+  console.log('SP fields:', JSON.stringify(fields));
   await fp(`${G}/sites/${siteId}/lists/${listProjId}/items`,t,{fields});
     subS('lst',nrZad); setS('lst','d');
 
