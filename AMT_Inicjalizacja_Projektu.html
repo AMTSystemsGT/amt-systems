@@ -397,6 +397,36 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:#f3f2
     </div>
 
     <div class="card">
+      <div class="section-title" style="margin-bottom:12px">Dane finansowe projektu</div>
+      <div class="row2" style="margin-bottom:12px">
+        <div class="f" style="margin-bottom:0">
+          <label>Wartość netto (zł) <span style="font-size:11px;color:#a19f9d">z oferty lub szacunkowa</span></label>
+          <input type="number" id="fWartoscNetto" min="0" step="100" placeholder="np. 4500" oninput="calcBrutto()">
+        </div>
+        <div class="f" style="margin-bottom:0">
+          <label>Wartość brutto (zł) <span style="font-size:11px;color:#a19f9d">wyliczana automatycznie</span></label>
+          <input type="number" id="fWartoscBrutto" readonly style="background:#f3f2f1;color:#605e5c">
+        </div>
+      </div>
+      <div class="row2">
+        <div class="f" style="margin-bottom:0">
+          <label>Kwota zaliczki (zł) <span style="font-size:11px;color:#a19f9d">opcjonalnie</span></label>
+          <input type="number" id="fZaliczka" min="0" step="100" placeholder="np. 1350">
+        </div>
+        <div class="f" style="margin-bottom:0">
+          <label>Status płatności</label>
+          <select id="fStatusPlatnosci">
+            <option value="Oczekuje na zaliczkę">Oczekuje na zaliczkę</option>
+            <option value="Zaliczka wpłacona">Zaliczka wpłacona</option>
+            <option value="Do fakturowania">Do fakturowania</option>
+            <option value="Faktura wystawiona">Faktura wystawiona</option>
+            <option value="Opłacone">Opłacone</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
       <div id="formErr" style="display:none;margin-bottom:12px"></div>
       <div class="btn-row">
         <button class="btn btn-ghost" onclick="resetForm()">Wyczyść formularz</button>
@@ -1212,6 +1242,7 @@ async function submitForm() {
 
     // PEŁNOMOCNICTWO — generuj i zapisz w tle (nie blokuje sukcesu)
     generatePelnomocnictwo(t, projSiteId, nrZad, rodzaj).catch(e => console.warn('pelno:', e));
+    saveToListaZarzadcza(t, nrZad, siteId).catch(e => console.warn('zarządcza:', e));
 
     // SUKCES
     document.getElementById('progressCard').style.display='none';
@@ -1669,6 +1700,47 @@ async function generatePelnomocnictwo(t, projSiteId, nrZad, rodzaj) {
   } catch(e) {
     console.warn('Błąd generowania pełnomocnictwa:', e);
     // Nie przerywamy inicjalizacji — pełnomocnictwo jest opcjonalne
+  }
+}
+
+
+// ── FINANSE ───────────────────────────────────────────────────────────────────
+function calcBrutto() {
+  const netto = parseFloat(document.getElementById('fWartoscNetto').value)||0;
+  document.getElementById('fWartoscBrutto').value = netto > 0 ? Math.round(netto * 1.23) : '';
+}
+
+async function saveToListaZarzadcza(t, nrZad, siteId) {
+  const netto    = parseFloat(document.getElementById('fWartoscNetto').value)||0;
+  const brutto   = Math.round(netto * 1.23);
+  const zaliczka = parseFloat(document.getElementById('fZaliczka').value)||0;
+  const status   = document.getElementById('fStatusPlatnosci').value;
+  const klient   = document.getElementById('klSearch')?.value || (selectedKlient?.nazwa || '');
+
+  // Znajdź ID listy zarządczej
+  try {
+    const listsR = await fetch(`https://graph.microsoft.com/v1.0/sites/${siteId}/lists?$select=id,name`, {headers:{Authorization:`Bearer ${t}`}});
+    const listsData = await listsR.json();
+    const lista = (listsData.value||[]).find(l => l.name && l.name.toLowerCase().includes('zarz'));
+    if (!lista) { console.warn('Nie znaleziono listy zarządczej'); return; }
+
+    const fields = {
+      Title:               nrZad,
+      Klient:              klient,
+      'Wartoscnetto':      netto,
+      'Wartoscbrutto':     brutto,
+      'Kwotazaliczki':     zaliczka,
+      'Statuspłatnosci':   status,
+    };
+    await fetch(`https://graph.microsoft.com/v1.0/sites/${siteId}/lists/${lista.id}/items`, {
+      method:'POST',
+      headers:{Authorization:`Bearer ${t}`,'Content-Type':'application/json'},
+      body: JSON.stringify({fields})
+    });
+    console.log('Lista zarządcza: zapisano', nrZad);
+  } catch(e) {
+    console.warn('Lista zarządcza — błąd zapisu:', e.message);
+    // Nie przerywamy inicjalizacji
   }
 }
 
