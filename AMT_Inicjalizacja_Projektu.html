@@ -990,11 +990,9 @@ async function submitForm() {
     // Buduj fields - tylko niepuste wartości
     const fields={ Title: nrZad };
     fields.Rok                           = v('fRok');
-    fields.Status                        = v('fStatus');
-    fields.Typprojekty                   = rodzaj;
     // Mapowanie Rodzaj projektu -> Typ projektu (dokładne wartości Choice w SP)
     const typMap = {
-      'GAZi':'Gazi','GAZp':'GAZp','Wp':'Wp','KSp':'KSp','WKSp':'WKSp',
+      'GAZi':'GAZi','GAZp':'GAZp','Wp':'Wp','KSp':'KSp','WKSp':'WKSp',
       'KDp':'KDp','KSs':'KSs','Ws':'Ws','WKSs':'WKSs','Sp':'Sp',
       'COs':'COs','COp':'COp','PFU':'PFU','INSw':'INSw','Inne':'Inne'
     };
