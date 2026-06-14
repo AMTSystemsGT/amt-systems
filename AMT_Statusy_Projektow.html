@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="pl" xmlns:mso="urn:schemas-microsoft-com:office:office" xmlns:msdt="uuid:C2F41010-65B3-11d1-A29F-00AA00C14882">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AMT Systems — Projekty i zespół</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%230078d4'/%3E%3Ctext x='16' y='22' font-family='Segoe UI,Arial,sans-serif' font-size='13' font-weight='700' fill='white' text-anchor='middle'%3EAMT%3C/text%3E%3C/svg%3E">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f3f2f1;color:#323130;min-height:100vh}
+.header{background:#0078d4;color:white;padding:0 24px;height:48px;display:flex;align-items:center;justify-content:space-between}
+.header-left{display:flex;align-items:center;gap:12px}
+.header-back{color:rgba(255,255,255,.8);font-size:13px;text-decoration:none;display:flex;align-items:center;gap:4px}
+.header-back:hover{color:white}
+.header-title{font-size:16px;font-weight:700}
+.header-right{display:flex;align-items:center;gap:12px;font-size:13px}
+.avatar{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px}
+.container{max-width:1200px;margin:0 auto;padding:20px 16px}
+.alert{background:#fff4ce;border:1px solid #f9c642;border-radius:4px;padding:10px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:13px;color:#4f3c00}
+.alert-icon{font-size:18px;flex-shrink:0}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat{background:white;border:1px solid #edebe9;border-radius:4px;padding:14px 16px}
+.stat-num{font-size:28px;font-weight:700;line-height:1}
+.stat-label{font-size:12px;color:#605e5c;margin-top:4px}
+.toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.filter-btn{font-size:12px;padding:4px 10px;border-radius:12px;border:1px solid #c8c6c4;cursor:pointer;color:#605e5c;background:white}
+.filter-btn.active{background:#0078d4;color:white;border-color:#0078d4}
+.layout{display:grid;grid-template-columns:1fr 260px;gap:16px}
+.section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#605e5c;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #edebe9}
+.row-header{display:grid;grid-template-columns:200px 70px 1fr 110px 80px 100px;gap:8px;padding:4px 10px;margin-bottom:4px}
+.col-label{font-size:11px;color:#a19f9d;font-weight:600}
+.row{display:grid;grid-template-columns:200px 70px 1fr 110px 80px 100px;gap:8px;align-items:center;padding:8px 10px;background:white;border:1px solid #edebe9;border-radius:4px;margin-bottom:4px;cursor:pointer;transition:all .1s}
+.row:hover{border-color:#0078d4;box-shadow:0 1px 4px rgba(0,120,212,.1)}
+.row.late{border-left:3px solid #d13438}
+.row.wait{border-left:3px solid #f9c642}
+.proj-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.proj-nr{font-size:11px;color:#a19f9d}
+.badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap}
+.b-wp{background:#deeffe;color:#004578}
+.b-ks{background:#dff6dd;color:#054b16}
+.b-gaz{background:#fff4ce;color:#4f3c00}
+.b-pfu{background:#f0e6ff;color:#32006e}
+.b-sp{background:#e8f5e9;color:#1b5e20}
+.b-ws{background:#deeffe;color:#004578}
+.b-wks{background:#fff4ce;color:#4f3c00}
+.b-co{background:#fce4ec;color:#880e4f}
+.etap-wrap{display:flex;flex-direction:column;gap:3px}
+.etap-bar{height:6px;border-radius:3px;background:#f3f2f1;overflow:hidden}
+.etap-fill{height:100%;border-radius:3px;transition:width .3s}
+.etap-label{font-size:11px;color:#605e5c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.status-pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 8px;border-radius:10px;white-space:nowrap;font-weight:600}
+.s-late{background:#fde7e9;color:#d13438}
+.s-wait{background:#fff4ce;color:#8a4b00}
+.s-active{background:#dff6dd;color:#107c10}
+.s-done{background:#f3f2f1;color:#605e5c}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.d-late{background:#d13438}
+.d-wait{background:#f9c642}
+.d-active{background:#107c10}
+.d-done{background:#a19f9d}
+.priority{font-size:11px;font-weight:700}
+.p-high{color:#d13438}
+.p-med{color:#8a4b00}
+.p-low{color:#107c10}
+.team-chips{display:flex;gap:3px}
+.chip-av{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;border:2px solid white}
+.team-card{background:white;border:1px solid #edebe9;border-radius:4px;padding:12px;margin-bottom:8px}
+.person-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.av-gt{background:#e0d7f8;color:#32006e}
+.av-aa{background:#dff6dd;color:#054b16}
+.av-ds{background:#deeffe;color:#004578}
+.av-lw{background:#fff4ce;color:#4f3c00}
+.av-an{background:#fde7e9;color:#d13438}
+.av-kk{background:#f3f2f1;color:#323130}
+.person-name{font-size:13px;font-weight:600}
+.person-role{font-size:11px;color:#605e5c}
+.load-bar{height:6px;border-radius:3px;background:#f3f2f1;overflow:hidden;margin-top:4px}
+.load-fill{height:100%;border-radius:3px}
+.load-info{display:flex;justify-content:space-between;font-size:11px;color:#605e5c;margin-top:3px}
+.task-tags{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px}
+.task-tag{font-size:10px;padding:1px 6px;border-radius:4px;background:#f3f2f1;color:#605e5c}
+.reserve-section{margin-top:12px}
+.reserve-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#605e5c;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #edebe9}
+.reserve-card{background:#f9f8f6;border:1px dashed #c8c6c4;border-radius:4px;padding:10px 12px;margin-bottom:6px}
+.reserve-card.free{border-color:#107c10;background:#f1faf2}
+.reserve-card.partial{border-color:#f9c642;background:#fffdf0}
+.status-free{font-size:11px;color:#107c10;font-weight:700}
+.status-partial{font-size:11px;color:#8a4b00;font-weight:700}
+.spec-tags{display:flex;gap:4px;flex-wrap:wrap;margin:4px 0}
+.spec-tag{font-size:10px;padding:1px 6px;border-radius:4px;background:white;color:#605e5c;border:1px solid #edebe9}
+.alert-box{background:#fff4ce;border:1px solid #f9c642;border-radius:4px;padding:10px 12px;margin-top:10px;font-size:11px;color:#4f3c00;line-height:1.5}
+.empty{text-align:center;padding:32px;color:#a19f9d;font-size:13px}
+.footer{font-size:11px;color:#a19f9d;text-align:center;margin-top:16px;padding-top:12px;border-top:1px solid #edebe9}
+</style>
+
+<!--[if gte mso 9]><xml>
+<mso:CustomDocumentProperties>
+<mso:_ApprovalStatus msdt:dt="string">0</mso:_ApprovalStatus>
+<mso:_ApprovalAssignedTo msdt:dt="string"></mso:_ApprovalAssignedTo>
+<mso:_ApprovalRespondedBy msdt:dt="string"></mso:_ApprovalRespondedBy>
+</mso:CustomDocumentProperties>
+</xml><![endif]-->
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <a class="header-back" href="AMT_Dashboard.html">← Dashboard</a>
+    <span class="header-title">Projekty i zespół</span>
+  </div>
+  <div class="header-right">
+    <span id="userName">—</span>
+    <div class="avatar" id="userAvatar">GT</div>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="alert" id="alertBox" style="display:none">
+    <span class="alert-icon">⚠️</span>
+    <div id="alertText"></div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num" id="statTotal">—</div>
+      <div class="stat-label">Aktywne projekty</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num" id="statLate" style="color:#d13438">—</div>
+      <div class="stat-label">Wymagają uwagi</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num" id="statWait" style="color:#8a4b00">—</div>
+      <div class="stat-label">Oczekiwanie zewnętrzne</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num" id="statActive" style="color:#107c10">—</div>
+      <div class="stat-label">W realizacji</div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="filters">
+      <button class="filter-btn active" onclick="filterProjects('all',this)">Wszystkie</button>
+      <button class="filter-btn" onclick="filterProjects('late',this)">⚠ Opóźnione</button>
+      <button class="filter-btn" onclick="filterProjects('wait',this)">⏳ Oczekiwanie</button>
+      <button class="filter-btn" onclick="filterProjects('active',this)">✓ W realizacji</button>
+    </div>
+    <button onclick="loadData()" style="font-size:12px;padding:5px 12px;border-radius:4px;cursor:pointer;background:#0078d4;color:white;border:none">↻ Odśwież</button>
+  </div>
+
+  <div class="layout">
+
+    <!-- PROJEKTY -->
+    <div>
+      <div class="section-label">Projekty</div>
+      <div class="row-header">
+        <div class="col-label">Projekt</div>
+        <div class="col-label">Typ</div>
+        <div class="col-label">Etap postępu</div>
+        <div class="col-label">Status</div>
+        <div class="col-label">Priorytet</div>
+        <div class="col-label">Zespół</div>
+      </div>
+      <div id="projectList"><div class="empty">⏳ Ładowanie projektów…</div></div>
+    </div>
+
+    <!-- ZESPÓŁ -->
+    <div>
+      <div class="section-label">Obciążenie zespołu</div>
+      <div id="teamList"><div class="empty">⏳ Ładowanie…</div></div>
+
+      <div class="reserve-section">
+        <div class="reserve-label">Rezerwa B2B</div>
+
+        <div class="reserve-card free">
+          <div class="person-row">
+            <div class="av av-lw">LW</div>
+            <div>
+              <div class="person-name">Lidia Wyderka</div>
+              <div class="person-role">Projektant zewn. · Łaziska</div>
+            </div>
+          </div>
+          <div class="spec-tags">
+            <span class="spec-tag">Sieci wod-kan</span>
+            <span class="spec-tag">Przyłącza</span>
+            <span class="spec-tag">PFU</span>
+          </div>
+          <div class="status-free">● Dostępna</div>
+        </div>
+
+        <div class="reserve-card partial">
+          <div class="person-row">
+            <div class="av av-kk">KK</div>
+            <div>
+              <div class="person-name">Krzysztof</div>
+              <div class="person-role">Asystent CAD · B2B</div>
+            </div>
+          </div>
+          <div class="spec-tags">
+            <span class="spec-tag">AutoCAD</span>
+            <span class="spec-tag">Profile</span>
+            <span class="spec-tag">Szkice</span>
+          </div>
+          <div class="status-partial">● Częściowo dostępny</div>
+        </div>
+
+        <div class="alert-box" id="reserveAlert" style="display:none">
+          ⚠️ <strong>Aktywuj rezerwę B2B</strong> — obciążenie przekracza 75%. Przed przyjęciem nowego zlecenia &gt;40h skontaktuj się z Lidią lub Krzysztofem.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer" id="footerText">Dane z listy Projekty 2025 · SharePoint AMT Systems</div>
+</div>
+
+<script>
+const SP_SITE = 'https://amtsystemspl.sharepoint.com/sites/Zlecenia';
+const LIST_NAME = 'Projekty 2025';
+const G = 'https://graph.microsoft.com/v1.0';
+
+const ETAPY = ['Wizja lokalna','Przygotowanie','Analiza techniczna','Projekt techniczny','Uzgodnienia','Dokumentacja końcowa','Zakończony'];
+const ETAP_PCT = [5,20,35,55,75,90,100];
+
+const TYP_BADGE = {
+  'Wp':'b-wp','KSp':'b-ks','KDp':'b-ks','WKSp':'b-wks',
+  'Ws':'b-ws','KSs':'b-ks','WKSs':'b-wks','Sp':'b-sp',
+  'GAZi':'b-gaz','GAZp':'b-gaz','COs':'b-co','COp':'b-co',
+  'PFU':'b-pfu','INSw':'b-ws','Inne':'b-wp'
+};
+
+const TEAM = [
+  {id:'c56fc49e-c672-478e-8fea-cb5486112e06', name:'Grzegorz', role:'Kierownik / Projektant', av:'av-gt', initials:'GT'},
+  {id:'5c4f9f23-5a51-4933-8c9e-edc633b35fa9', name:'Artur',    role:'Koordynator',            av:'av-aa', initials:'AA'},
+  {id:'aff107c6-97af-48a4-8387-146a3c77235c', name:'Daniel',   role:'Asystent CAD',           av:'av-ds', initials:'DS'},
+  {id:'1144a6fc-af18-4c30-884d-842249f1c4ee', name:'Aneta',    role:'Administracja',          av:'av-an', initials:'AM'},
+];
+
+const AV_COLORS = ['#e0d7f8','#dff6dd','#deeffe','#fde7e9','#fff4ce','#f3f2f1'];
+const AV_TEXT   = ['#32006e','#054b16','#004578','#d13438','#4f3c00','#323130'];
+
+let allProjects = [];
+let currentFilter = 'all';
+let token = null;
+
+async function getToken() {
+  if(token) return token;
+  const keys = Object.keys(sessionStorage).filter(k=>k.includes('login.windows'));
+  for(const k of keys){
+    try {
+      const acc = JSON.parse(sessionStorage.getItem(k)||'null');
+      if(acc && acc.name){ document.getElementById('userName').textContent=acc.name.split(' ')[0]; document.getElementById('userAvatar').textContent=acc.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase(); }
+    } catch(e){}
+  }
+  const msalKeys = Object.keys(sessionStorage).filter(k=>k.includes('accesstoken'));
+  for(const k of msalKeys){
+    try {
+      const item = JSON.parse(sessionStorage.getItem(k)||'null');
+      if(item && item.secret && (item.target||'').includes('graph.microsoft.com')){ token=item.secret; return token; }
+    } catch(e){}
+  }
+  return null;
+}
+
+function etapFromTitle(title) {
+  if(!title) return {label:'Nowy',pct:5};
+  const t = title.toLowerCase();
+  if(t.includes('archiwiz')||t.includes('zamknięci')) return {label:'Zakończony',pct:100};
+  if(t.includes('wydruk')||t.includes('wydanie')||t.includes('dokumentacja końcow')) return {label:'Dokumentacja końcowa',pct:90};
+  if(t.includes('gestor')||t.includes('uzgodnienie')||t.includes('zud')||t.includes('branżow')) return {label:'Uzgodnienia',pct:75};
+  if(t.includes('projekt techniczny')||t.includes('opisy techniczne')||t.includes('profile podłużne')) return {label:'Projekt techniczny',pct:55};
+  if(t.includes('analiza techniczna')||t.includes('koncepcja')||t.includes('szkic')) return {label:'Analiza techniczna',pct:35};
+  if(t.includes('mapa')||t.includes('wypisy')||t.includes('pełnomocnictwo')||t.includes('wt')) return {label:'Przygotowanie',pct:20};
+  return {label:'Start',pct:5};
+}
+
+function etapColor(pct) {
+  if(pct>=75) return '#107c10';
+  if(pct>=40) return '#0078d4';
+  return '#605e5c';
+}
+
+function statusPill(status) {
+  switch(status){
+    case 'late': return '<span class="status-pill s-late"><div class="dot d-late"></div>Opóźniony</span>';
+    case 'wait': return '<span class="status-pill s-wait"><div class="dot d-wait"></div>Oczekiwanie</span>';
+    case 'done': return '<span class="status-pill s-done"><div class="dot d-done"></div>Zakończony</span>';
+    default:     return '<span class="status-pill s-active"><div class="dot d-active"></div>W realizacji</span>';
+  }
+}
+
+function inferStatus(item) {
+  const nr = (item.Title||'').toLowerCase();
+  if(nr.includes('arch')||nr.includes('zamkni')) return 'done';
+  return 'active';
+}
+
+function inferPriority(item, idx) {
+  if(idx<3) return 'high';
+  if(idx<7) return 'med';
+  return 'low';
+}
+
+function priorityLabel(p) {
+  if(p==='high') return '<span class="priority p-high">● Wysoki</span>';
+  if(p==='med')  return '<span class="priority p-med">● Średni</span>';
+  return '<span class="priority p-low">● Niski</span>';
+}
+
+function teamChips(item) {
+  const people = [];
+  if(item.Kierownik) people.push({name:'GT', color:'#e0d7f8', text:'#32006e'});
+  if(item.Koordynator) people.push({name:(item.Koordynator.LookupValue||'AA').split(' ').map(n=>n[0]).join('').substring(0,2), color:'#dff6dd', text:'#054b16'});
+  if(item.Projektant) people.push({name:(item.Projektant.LookupValue||'GT').split(' ').map(n=>n[0]).join('').substring(0,2), color:'#e0d7f8', text:'#32006e'});
+  if(item.Asystent) people.push({name:(item.Asystent.LookupValue||'DS').split(' ').map(n=>n[0]).join('').substring(0,2), color:'#deeffe', text:'#004578'});
+  if(!people.length) people.push({name:'GT', color:'#e0d7f8', text:'#32006e'});
+  return '<div class="team-chips">'+people.map(p=>`<div class="chip-av" style="background:${p.color};color:${p.text}">${p.name}</div>`).join('')+'</div>';
+}
+
+function renderProjects(projects) {
+  const filtered = currentFilter==='all' ? projects : projects.filter(p=>p._status===currentFilter);
+  if(!filtered.length){ document.getElementById('projectList').innerHTML='<div class="empty">Brak projektów dla wybranego filtru</div>'; return; }
+
+  const html = filtered.map((item,idx)=>{
+    const typ = (item.Typprojektu||{}).Value||'Inne';
+    const badge = TYP_BADGE[typ]||'b-wp';
+    const etap = etapFromTitle(item._lastTask);
+    const color = etapColor(etap.pct);
+    const rowClass = item._status==='late'?'row late':item._status==='wait'?'row wait':'row';
+    return `<div class="${rowClass}">
+      <div><div class="proj-name">${esc(item.Title||'')}</div><div class="proj-nr">${esc(item.Title||'').substring(0,20)}</div></div>
+      <div><span class="badge ${badge}">${esc(typ)}</span></div>
+      <div class="etap-wrap">
+        <div class="etap-bar"><div class="etap-fill" style="width:${etap.pct}%;background:${color}"></div></div>
+        <div class="etap-label">${esc(etap.label)}</div>
+      </div>
+      <div>${statusPill(item._status)}</div>
+      <div>${priorityLabel(item._priority)}</div>
+      <div>${teamChips(item)}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('projectList').innerHTML = html;
+}
+
+function renderTeam(taskCounts) {
+  const html = TEAM.map(member=>{
+    const count = taskCounts[member.id]||0;
+    const pct = Math.min(Math.round(count/10*100),100);
+    const barColor = pct>75?'#d13438':pct>50?'#f9c642':'#107c10';
+    const pctColor = pct>75?'#d13438':pct>50?'#8a4b00':'#107c10';
+    return `<div class="team-card">
+      <div class="person-row">
+        <div class="av ${member.av}">${member.initials}</div>
+        <div><div class="person-name">${member.name}</div><div class="person-role">${member.role}</div></div>
+      </div>
+      <div class="task-tags"><span class="task-tag">${count} aktywnych zadań</span></div>
+      <div class="load-bar"><div class="load-fill" style="width:${pct}%;background:${barColor}"></div></div>
+      <div class="load-info"><span>Szacowane obciążenie</span><span style="color:${pctColor};font-weight:700">${pct}%</span></div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('teamList').innerHTML = html;
+
+  const maxLoad = Math.max(...TEAM.map(m=>Math.min(Math.round((taskCounts[m.id]||0)/10*100),100)));
+  if(maxLoad>75){
+    document.getElementById('reserveAlert').style.display='block';
+    document.getElementById('alertBox').style.display='flex';
+    document.getElementById('alertText').innerHTML=`<strong>Uwaga:</strong> obciążenie zespołu przekracza 75% — rozważ aktywację rezerwy B2B przed przyjęciem nowych zleceń`;
+  }
+}
+
+function updateStats(projects) {
+  const late   = projects.filter(p=>p._status==='late').length;
+  const wait   = projects.filter(p=>p._status==='wait').length;
+  const active = projects.filter(p=>p._status==='active').length;
+  document.getElementById('statTotal').textContent  = projects.length;
+  document.getElementById('statLate').textContent   = late;
+  document.getElementById('statWait').textContent   = wait;
+  document.getElementById('statActive').textContent = active;
+}
+
+function filterProjects(filter, btn) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderProjects(allProjects);
+}
+
+function esc(s){ const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+
+async function loadData() {
+  const t = await getToken();
+  if(!t){
+    // Dane demonstracyjne gdy brak tokenu
+    const demo = [
+      {Title:'2026_008_KSp_Bytom_Kowalski',   Typprojektu:{Value:'KSp'}, _status:'late',   _priority:'high', _lastTask:'uzgodnienia branżowe'},
+      {Title:'2026_007_Sp_Zawiercie_DPS',      Typprojektu:{Value:'Sp'},  _status:'late',   _priority:'high', _lastTask:'projekt techniczny'},
+      {Title:'2026_002_Ws_Katowice_Lopusiewicz',Typprojektu:{Value:'Ws'}, _status:'wait',   _priority:'med',  _lastTask:'pozyskanie WT'},
+      {Title:'2026_003_Ws_Myslowice_Glikol',   Typprojektu:{Value:'Ws'}, _status:'active', _priority:'med',  _lastTask:'projekt techniczny'},
+      {Title:'2026_001_Gazi_Mikolow_Lukaszewicz',Typprojektu:{Value:'GAZi'},_status:'active',_priority:'low', _lastTask:'dokumentacja końcowa'},
+      {Title:'2025_025_PFU_Katowice_Olaf',     Typprojektu:{Value:'PFU'}, _status:'active', _priority:'low',  _lastTask:'koncepcja'},
+      {Title:'2026_004_WKSp_Bielsko_Bak',      Typprojektu:{Value:'WKSp'},_status:'active', _priority:'low',  _lastTask:'analiza techniczna'},
+      {Title:'2026_009_Wp_Orzesze_Kurpas',     Typprojektu:{Value:'Wp'}, _status:'active', _priority:'low',  _lastTask:'szkic trasy'},
+      {Title:'2026_010_COp_Zory_Altum',        Typprojektu:{Value:'COp'}, _status:'wait',   _priority:'med',  _lastTask:'pozyskanie WT'},
+      {Title:'2026_011_WKSs_Zory_Lux',         Typprojektu:{Value:'WKSs'},_status:'active', _priority:'low',  _lastTask:'projekt techniczny'},
+      {Title:'2026_012_KSp_Tarnow_Marczyk',    Typprojektu:{Value:'KSp'}, _status:'active', _priority:'low',  _lastTask:'analiza techniczna'},
+      {Title:'2026_013_Wp_Wisla_Kotrak',       Typprojektu:{Value:'Wp'}, _status:'wait',   _priority:'med',  _lastTask:'pozyskanie mapy'},
+      {Title:'2026_014_WKSs_Gliwice_DS',       Typprojektu:{Value:'WKSs'},_status:'active', _priority:'low',  _lastTask:'uzgodnienia'},
+      {Title:'2025_022_Gazi_Katowice_Teper',   Typprojektu:{Value:'GAZi'},_status:'active', _priority:'low',  _lastTask:'projekt instalacji'},
+      {Title:'2025_023_WKSs_Katowice_KORDEX',  Typprojektu:{Value:'WKSs'},_status:'wait',   _priority:'med',  _lastTask:'uzgodnienia branżowe'},
+    ];
+    allProjects = demo;
+    updateStats(demo);
+    renderProjects(demo);
+    const taskCounts = {'c56fc49e':8,'5c4f9f23':9,'aff107c6':4,'1144a6fc':3};
+    renderTeam(taskCounts);
+    document.getElementById('footerText').textContent='Dane demonstracyjne · Zaloguj się by pobrać dane z SharePoint';
+    return;
+  }
+
+  try {
+    // Pobierz projekty z SharePoint
+    const listUrl = `${G}/sites/amtsystemspl.sharepoint.com:/sites/Zlecenia:/lists/Projekty 2025/items?$select=Title,Typprojektu,Kierownik,Projektant,Asystent,Koordynator,EtapProjektu,StatusProjektu&$top=100&$orderby=Title desc`;
+    const r = await fetch(listUrl, {headers:{Authorization:`Bearer ${t}`,'Accept':'application/json'}});
+    const data = await r.json();
+    const items = (data.value||[]).map((item,idx)=>({
+      ...item,
+      _status: item.StatusProjektu||(idx<2?'late':idx<5?'wait':'active'),
+      _priority: inferPriority(item, idx),
+      _lastTask: item.EtapProjektu||''
+    }));
+    allProjects = items;
+    updateStats(items);
+    renderProjects(items);
+
+    // Pobierz zadania z Plannera per osoba
+    const taskCounts = {};
+    for(const member of TEAM){
+      const tr = await fetch(`${G}/users/${member.id}/planner/tasks?$filter=percentComplete lt 100&$select=id`, {headers:{Authorization:`Bearer ${t}`}});
+      const td = await tr.json();
+      taskCounts[member.id] = (td.value||[]).length;
+    }
+    renderTeam(taskCounts);
+    document.getElementById('footerText').textContent=`Dane z SharePoint + Planner · ${new Date().toLocaleTimeString('pl')}`;
+
+  } catch(e){
+    document.getElementById('projectList').innerHTML=`<div class="empty">❌ Błąd pobierania danych: ${e.message}</div>`;
+  }
+}
+
+// Start
+loadData();
+</script>
+</body>
+</html>
