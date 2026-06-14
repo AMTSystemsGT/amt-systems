@@ -1633,7 +1633,7 @@ async function generatePelnomocnictwo(t, projSiteId, nrZad, rodzaj) {
     // Zapisz w folderze projektu: 00_Materialy_wejsciowe/
     const filename = `Pelnomocnictwo_${nrZad}.docx`;
     if (projSiteId) {
-      const folderPath = `UKLAD_FOLDEROW_Sharepoint/00_Materialy_wejsciowe`;
+      const folderPath = `UKLAD_FOLDEROW_Sharepoint/00_Materialy_wejsciowe/04_Pelnomocnictwa`;
       const uploadUrl = `https://graph.microsoft.com/v1.0/sites/${projSiteId}/drive/root:/${folderPath}/${encodeURIComponent(filename)}:/content`;
       const r = await fetch(uploadUrl, {
         method:'PUT',
