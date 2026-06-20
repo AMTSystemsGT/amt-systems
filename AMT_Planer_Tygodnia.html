@@ -398,7 +398,11 @@ async function loadProjects() {
       `$select=id,Title,Typprojektu,EtapProjektu,StatusProjektu,PriorytetProjektu,AdreswitrynyprojektuSHAREPOINT&` +
       `$top=200&$orderby=Title desc`;
     const r = await fetch(url, {headers:{Authorization:`Bearer ${t}`}});
-    if (!r.ok) throw new Error('SP ' + r.status);
+    if (!r.ok) {
+      const errBody = await r.text();
+      console.error('SP error body:', errBody);
+      throw new Error('SP ' + r.status + ': ' + errBody);
+    }
     const data = await r.json();
     allProjects = (data.value||[]).filter(p => {
       const s = (p.StatusProjektu||'').toLowerCase();
