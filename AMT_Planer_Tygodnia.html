@@ -395,8 +395,8 @@ async function loadProjects() {
   try {
     const t = await tok();
     const url = `${G}/sites/amtsystemspl.sharepoint.com:/sites/Zlecenia:/lists/Projekty%202025/items?` +
-      `$select=id,Title,Typprojektu,EtapProjektu,StatusProjektu,PriorytetProjektu,AdreswitrynyprojektuSHAREPOINT&` +
-      `$top=200&$orderby=Title desc`;
+      `$select=id&$expand=fields($select=Title,Typprojektu,EtapProjektu,StatusProjektu,PriorytetProjektu,AdreswitrynyprojektuSHAREPOINT)&` +
+      `$top=200`;
     const r = await fetch(url, {headers:{Authorization:`Bearer ${t}`}});
     if (!r.ok) {
       const errBody = await r.text();
@@ -404,10 +404,13 @@ async function loadProjects() {
       throw new Error('SP ' + r.status + ': ' + errBody);
     }
     const data = await r.json();
-    allProjects = (data.value||[]).filter(p => {
-      const s = (p.StatusProjektu||'').toLowerCase();
-      return !s.includes('archiw') && !s.includes('zamkni');
-    });
+    allProjects = (data.value||[])
+      .map(item => ({ id: item.id, ...(item.fields||{}) }))
+      .filter(p => {
+        const s = (p.StatusProjektu||'').toLowerCase();
+        return !s.includes('archiw') && !s.includes('zamkni');
+      })
+      .sort((a,b) => (b.Title||'').localeCompare(a.Title||''));
     await loadListaZarzadcza(t);
     renderProjects();
   } catch(e) {
@@ -423,8 +426,8 @@ async function loadListaZarzadcza(t) {
     const lista = (listsData.value||[]).find(l => l.name && l.name.toLowerCase().includes('zarz'));
     if (!lista) { console.warn('Nie znaleziono listy zarządczej'); return; }
 
-    const r = await fetch(`${G}/sites/amtsystemspl.sharepoint.com:/sites/Zlecenia:/lists/${lista.id}/items?$select=fields&$expand=fields($select=Title,Wartoscnetto)&$top=500`, {headers:{Authorization:`Bearer ${t}`}});
-    if (!r.ok) { console.warn('Lista zarządcza fetch failed', r.status); return; }
+    const r = await fetch(`${G}/sites/amtsystemspl.sharepoint.com:/sites/Zlecenia:/lists/${lista.id}/items?$select=id&$expand=fields($select=Title,Wartoscnetto)&$top=500`, {headers:{Authorization:`Bearer ${t}`}});
+    if (!r.ok) { console.warn('Lista zarządcza fetch failed', r.status, await r.text()); return; }
     const data = await r.json();
     wartoscNettoMap = {};
     for (const item of (data.value||[])) {
