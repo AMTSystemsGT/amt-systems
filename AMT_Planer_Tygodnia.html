@@ -284,6 +284,7 @@ let msalInst = null, currentAcc = null;
 let currentWeekStart = getMonday(new Date());
 let allProjects = [];
 let selectedProjects = {}; // id → {hGT, hDaniel, etap}
+let wartoscNettoMap = {}; // Title → wartość netto z listy zarządczej
 
 // ── MSAL ─────────────────────────────────────────────────────────────────────
 async function initMsal() {
@@ -403,10 +404,31 @@ async function loadProjects() {
       const s = (p.StatusProjektu||'').toLowerCase();
       return !s.includes('archiw') && !s.includes('zamkni');
     });
+    await loadListaZarzadcza(t);
     renderProjects();
   } catch(e) {
     document.getElementById('projectList').innerHTML =
       `<div style="color:#d13438;font-size:13px;padding:12px">❌ Błąd: ${esc(e.message)}</div>`;
+  }
+}
+
+async function loadListaZarzadcza(t) {
+  try {
+    const listsR = await fetch(`${G}/sites/amtsystemspl.sharepoint.com:/sites/Zlecenia:/lists?$select=id,name`, {headers:{Authorization:`Bearer ${t}`}});
+    const listsData = await listsR.json();
+    const lista = (listsData.value||[]).find(l => l.name && l.name.toLowerCase().includes('zarz'));
+    if (!lista) { console.warn('Nie znaleziono listy zarządczej'); return; }
+
+    const r = await fetch(`${G}/sites/amtsystemspl.sharepoint.com:/sites/Zlecenia:/lists/${lista.id}/items?$select=fields&$expand=fields($select=Title,Wartoscnetto)&$top=500`, {headers:{Authorization:`Bearer ${t}`}});
+    if (!r.ok) { console.warn('Lista zarządcza fetch failed', r.status); return; }
+    const data = await r.json();
+    wartoscNettoMap = {};
+    for (const item of (data.value||[])) {
+      const f = item.fields || {};
+      if (f.Title) wartoscNettoMap[f.Title] = parseFloat(f.Wartoscnetto) || 0;
+    }
+  } catch(e) {
+    console.warn('Lista zarządcza — błąd:', e.message);
   }
 }
 
@@ -446,6 +468,17 @@ function renderProjects() {
       <div class="hours-inputs">
         <label>GT: <input type="number" min="0" max="20" value="${hGT}" onclick="event.stopPropagation()" oninput="changeHours('${p.id}','GT',this.value)" style="width:48px"></label>
         <label>Daniel: <input type="number" min="0" max="30" value="${hDan}" onclick="event.stopPropagation()" oninput="changeHours('${p.id}','Daniel',this.value)" style="width:48px"></label>
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:#605e5c">
+        ${(() => {
+          const netto = wartoscNettoMap[p.Title];
+          if (netto && netto > 0) {
+            const weeks = totalProjectWeeks(typ);
+            const weekly = Math.round(netto/weeks);
+            return `💰 Netto: <strong>${netto.toLocaleString('pl-PL')} zł</strong> · ~${weeks} tyg. realizacji · <strong style="color:#107c10">${weekly.toLocaleString('pl-PL')} zł/tydz.</strong>`;
+          }
+          return `⚠ Brak wartości netto w liście zarządczej — liczone z godzin × stawka`;
+        })()}
       </div>` : ''}
     </div>`;
   }).join('');
@@ -466,6 +499,16 @@ function defaultHours(typ, who) {
     'COs': {GT:5, Daniel:16}, 'INSw':{GT:3, Daniel:8},
   };
   return normy[typ]?.[who] || (who==='GT' ? 4 : 12);
+}
+
+function totalProjectWeeks(typ) {
+  // Pełny czas realizacji projektu (suma godzin / dostępność tygodniowa)
+  const hGT     = defaultHours(typ, 'GT');
+  const hDaniel = defaultHours(typ, 'Daniel');
+  // Tygodnie liczone z większej z dwóch ścieżek (kto jest bottleneckiem)
+  const weeksGT     = hGT     / MAX_H_GT;
+  const weeksDaniel = hDaniel / MAX_H_DANIEL;
+  return Math.max(1, Math.round(Math.max(weeksGT, weeksDaniel) * 10) / 10);
 }
 
 function toggleProject(id) {
@@ -580,13 +623,32 @@ function renderCalendar() {
 }
 
 // ── FINANCIALS ────────────────────────────────────────────────────────────────
+function projectWeeklyRevenue(proj) {
+  const netto = wartoscNettoMap[proj.title];
+  if (netto && netto > 0) {
+    const weeks = totalProjectWeeks(proj.typ);
+    return { revenue: Math.round(netto / weeks), source: 'netto', weeks };
+  }
+  // Fallback — liczenie z godzin × stawka (gdy brak wartości netto w liście zarządczej)
+  const revenue = Math.round(proj.hGT * STAWKA_GT + proj.hDaniel * STAWKA_DANIEL);
+  return { revenue, source: 'godziny', weeks: null };
+}
+
 function updateFinancials() {
   const sel = Object.values(selectedProjects);
 
   let totalHGT     = sel.reduce((s,p)=>s+p.hGT, 0);
   let totalHDaniel = sel.reduce((s,p)=>s+p.hDaniel, 0);
 
-  const przychod = Math.round(totalHGT * STAWKA_GT + totalHDaniel * STAWKA_DANIEL);
+  let przychod = 0;
+  let usedFallback = false;
+  for (const p of sel) {
+    const calc = projectWeeklyRevenue(p);
+    przychod += calc.revenue;
+    if (calc.source === 'godziny') usedFallback = true;
+  }
+  przychod = Math.round(przychod);
+
   const koszt    = Math.round(totalHGT * KOSZT_GT  + totalHDaniel * KOSZT_DANIEL);
   const marza    = przychod > 0 ? Math.round((przychod-koszt)/przychod*100) : 0;
   const progPct  = Math.min(100, Math.round(przychod/CEL_TYDZIEN*100));
@@ -601,7 +663,8 @@ function updateFinancials() {
   const bar = document.getElementById('progBar');
   bar.style.width = progPct + '%';
   bar.className = 'progress-fill ' + (progPct >= 100 ? 'p-green' : progPct >= 70 ? 'p-yellow' : 'p-red');
-  document.getElementById('progSub').textContent = `Cel tygodniowy: ${CEL_TYDZIEN.toLocaleString('pl-PL')} zł (${CEL_MIESIAC.toLocaleString('pl-PL')} zł / mies.)`;
+  document.getElementById('progSub').textContent = `Cel tygodniowy: ${CEL_TYDZIEN.toLocaleString('pl-PL')} zł (${CEL_MIESIAC.toLocaleString('pl-PL')} zł / mies.)` +
+    (usedFallback ? ' · ⚠ część liczona z godzin (brak wartości netto w liście zarządczej)' : '');
 
   // Alert finansowy
   const alertEl = document.getElementById('finAlert');
