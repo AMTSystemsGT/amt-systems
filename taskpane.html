@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AMT — Zapisz do rejestru</title>
+<script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; font-size: 13px; color: #242424; background: #faf9f8; padding: 14px; }
+  .badge-proto { display:inline-block; background:#FCEBEB; color:#791F1F; font-size:10px; font-weight:600; padding:3px 8px; border-radius:10px; margin-bottom:12px; }
+  .card { background: white; border: 1px solid #e1dfdd; border-radius: 6px; padding: 12px; margin-bottom: 10px; }
+  .card-label { font-size: 11px; color: #8a8886; margin-bottom: 5px; }
+  select, input[type=text] { width: 100%; font-size: 13px; padding: 6px 8px; border: 1px solid #d1d1d1; border-radius: 3px; background: white; }
+  .subject { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+  .meta { font-size: 11px; color: #605e5c; margin-bottom: 14px; }
+  .att-row { display:flex; align-items:center; gap:6px; font-size:12px; padding: 3px 0; }
+  .att-empty { font-size:12px; color:#8a8886; font-style: italic; }
+  button.primary { width:100%; padding:9px; background:#0078d4; color:white; border:none; border-radius:3px; font-size:13px; font-weight:600; cursor:pointer; }
+  button.primary:disabled { background:#c8c6c4; cursor:default; }
+  .hint { font-size: 10px; color: #8a8886; margin-top: 6px; }
+  .toast { display:none; margin-top:10px; background:#E1F5EE; color:#085041; border:1px solid #9FE1CB; border-radius:4px; padding:8px 10px; font-size:12px; }
+  .match-tag { font-size: 10px; color: #605e5c; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+  <div class="badge-proto">PROTOTYP — nic nie zapisuje się naprawdę</div>
+
+  <div class="subject" id="subject">—</div>
+  <div class="meta" id="meta">—</div>
+
+  <div class="card">
+    <div class="card-label">Projekt</div>
+    <select id="projekt"></select>
+    <div class="match-tag" id="matchTag"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-label">Typ pisma</div>
+    <select id="typPisma">
+      <option value="WN">Wniosek (WN)</option>
+      <option value="WT">Warunki techniczne (WT)</option>
+      <option value="UZ">Uzgodnienie (UZ)</option>
+      <option value="DEC">Decyzja administracyjna (DEC)</option>
+      <option value="TER">Zgoda terenowa (TER)</option>
+      <option value="KOR">Korespondencja ogólna</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <div class="card-label">Załączniki do zapisania</div>
+    <div id="attachments"><div class="att-empty">Wczytywanie…</div></div>
+  </div>
+
+  <button class="primary" id="saveBtn">Zapisz w SharePoint</button>
+  <div class="hint">W wersji prototypowej ten przycisk tylko symuluje zapis — nic nie trafia do SharePoint.</div>
+  <div class="toast" id="toast">Zapisano (symulacja) — bez realnego zapisu do SharePoint.</div>
+
+<script>
+// Mockowa lista projektów — w wersji docelowej pobierana z listy SharePoint "Projekty 2025/2026"
+const MOCK_PROJEKTY = [
+  { kod: '2026_012_KSp_Tarnow_Marczyk', klient: 'Marczyk', instytucja: 'Starostwo Powiatowe w Tarnowie' },
+  { kod: '2026_008_KSp_Ledziny_Swojnog', klient: 'Swojnog', instytucja: 'Urząd Miasta Łaziska Górne' },
+  { kod: '2025_022_Gazi_Katowice_Teper', klient: 'Teper', instytucja: 'PGE Dystrybucja S.A.' },
+  { kod: '2026_LK408_Szczecin_PKP', klient: 'PKP PLK', instytucja: 'Databi / PKP PLK' },
+];
+
+Office.onReady(() => {
+  const item = Office.context.mailbox.item;
+
+  document.getElementById('subject').textContent = item.subject || '(brak tematu)';
+  const from = item.from ? `${item.from.displayName} <${item.from.emailAddress}>` : '';
+  const when = item.dateTimeCreated ? new Date(item.dateTimeCreated).toLocaleString('pl-PL') : '';
+  document.getElementById('meta').textContent = [from, when].filter(Boolean).join(' · ');
+
+  renderProjektySelect(item.subject || '', from);
+  renderAttachments(item);
+
+  document.getElementById('saveBtn').addEventListener('click', onSaveMock);
+});
+
+function renderProjektySelect(subject, from) {
+  const sel = document.getElementById('projekt');
+  const tag = document.getElementById('matchTag');
+  sel.innerHTML = '';
+
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = '— wybierz projekt —';
+  sel.appendChild(placeholder);
+
+  MOCK_PROJEKTY.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.kod;
+    opt.textContent = p.kod;
+    sel.appendChild(opt);
+  });
+
+  // 1) dopasowanie po numerze projektu w temacie
+  const bySubject = MOCK_PROJEKTY.find(p => subject.includes(p.kod.split('_').slice(0,2).join('_')) || subject.toUpperCase().includes(p.kod.split('_')[2]?.toUpperCase() || '###'));
+
+  // 2) dopasowanie po instytucji/nadawcy w treści "from"
+  const byInstytucja = MOCK_PROJEKTY.filter(p => from && from.toLowerCase().includes(p.instytucja.split(' ')[0].toLowerCase()));
+
+  if (bySubject) {
+    sel.value = bySubject.kod;
+    tag.textContent = 'Dopasowano po numerze projektu w temacie';
+  } else if (byInstytucja.length === 1) {
+    sel.value = byInstytucja[0].kod;
+    tag.textContent = 'Dopasowano po nadawcy — jeden aktywny projekt dla tej instytucji';
+  } else if (byInstytucja.length > 1) {
+    tag.textContent = `Kilku kandydatów dla tej instytucji (${byInstytucja.length}) — wybierz ręcznie`;
+  } else {
+    tag.textContent = 'Brak dopasowania — wybierz ręcznie';
+  }
+}
+
+function renderAttachments(item) {
+  const box = document.getElementById('attachments');
+  const atts = item.attachments || [];
+  if (atts.length === 0) {
+    box.innerHTML = '<div class="att-empty">Brak załączników w tej wiadomości</div>';
+    return;
+  }
+  box.innerHTML = '';
+  atts.forEach(a => {
+    const row = document.createElement('div');
+    row.className = 'att-row';
+    row.textContent = `📎 ${a.name}`;
+    box.appendChild(row);
+  });
+}
+
+function onSaveMock() {
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.textContent = 'Zapisywanie… (symulacja)';
+  setTimeout(() => {
+    btn.textContent = 'Zapisz w SharePoint';
+    btn.disabled = false;
+    const toast = document.getElementById('toast');
+    toast.style.display = 'block';
+    setTimeout(() => toast.style.display = 'none', 4000);
+  }, 700);
+}
+</script>
+</body>
+</html>
