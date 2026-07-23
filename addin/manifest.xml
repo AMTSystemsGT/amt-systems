@@ -13,7 +13,7 @@
   <DisplayName DefaultValue="AMT — Zapisz do rejestru" />
   <Description DefaultValue="Zapisuje wiadomość i załączniki do rejestru korespondencji AMT Systems (PROTOTYP — bez zapisu do SharePoint)." />
   <IconUrl DefaultValue="https://agreeable-plant-0f7fa3903.7.azurestaticapps.net/addin/assets/icon-32.png" />
-  <HighResIconUrl DefaultValue="https://agreeable-plant-0f7fa3903.7.azurestaticapps.net/addin/assets/icon-80.png" />
+  <HighResolutionIconUrl DefaultValue="https://agreeable-plant-0f7fa3903.7.azurestaticapps.net/addin/assets/icon-80.png" />
   <SupportUrl DefaultValue="https://agreeable-plant-0f7fa3903.7.azurestaticapps.net/addin/taskpane.html" />
 
   <AppDomains>
@@ -60,11 +60,6 @@
             <OfficeTab id="TabDefault">
               <Group id="amtGroup">
                 <Label resid="GroupLabel" />
-                <Icon>
-                  <bt:Image size="16" resid="Icon.16x16" />
-                  <bt:Image size="32" resid="Icon.32x32" />
-                  <bt:Image size="80" resid="Icon.80x80" />
-                </Icon>
                 <Control xsi:type="Button" id="amtSaveButton">
                   <Label resid="ButtonLabel" />
                   <Supertip>
