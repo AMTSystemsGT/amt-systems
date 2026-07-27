@@ -95,7 +95,6 @@
   <div class="result-section">
     <textarea id="result-box" placeholder="Rozpoznany tekst pojawi się tutaj...&#10;&#10;Możesz edytować tekst po rozpoznaniu."></textarea>
     <div class="actions">
-      <button id="key-btn" onclick="changeKey()" style="background:transparent;color:var(--text-muted);border:1px solid var(--border);">🔑 Klucz API</button>
       <button id="clear-btn" onclick="clearAll()">Wyczyść</button>
       <button id="copy-btn" onclick="copyText()">Kopiuj tekst</button>
     </div>
@@ -143,27 +142,8 @@ function setStatus(msg, type) {
   }
 }
 
-function getApiKey() {
-  return localStorage.getItem('amt_ocr_api_key') || '';
-}
-
-function saveApiKey(key) {
-  localStorage.setItem('amt_ocr_api_key', key);
-}
-
-function promptForApiKey() {
-  const key = prompt('🔑 Wpisz klucz API Anthropic:\n(zaczyna się od sk-ant-...)\n\nKlucz zostanie zapisany lokalnie w przeglądarce.');
-  if (key && key.startsWith('sk-ant-')) {
-    saveApiKey(key.trim());
-    return key.trim();
-  } else if (key) {
-    alert('❌ Nieprawidłowy klucz. Musi zaczynać się od sk-ant-');
-    return null;
-  }
-  return null;
-}
-
-const API_KEY = null; // klucz pobierany z localStorage
+// Klucz API Anthropic NIE jest już przechowywany ani używany w przeglądarce.
+// Wywołania idą przez amt-claude-proxy (Azure) — klucz zarządzany po stronie serwera.
 
 async function processImage(file) {
   if (!file || !file.type.startsWith('image/')) {
@@ -171,11 +151,6 @@ async function processImage(file) {
     return;
   }
 
-  let apiKey = getApiKey();
-  if (!apiKey) {
-    apiKey = promptForApiKey();
-    if (!apiKey) { setStatus('❌ Brak klucza API — nie można przetworzyć obrazka.', 'err'); return; }
-  }
   const reader = new FileReader();
   reader.onload = async (e) => {
     const base64 = e.target.result.split(',')[1];
@@ -188,34 +163,30 @@ async function processImage(file) {
     setStatus('Rozpoznaję tekst...', 'loading');
 
     try {
-      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      const resp = await fetch(PROXY, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-5',
-          max_tokens: 2000,
-          messages: [{
-            role: 'user',
-            content: [
-              { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-              { type: 'text', text: promptMap[tryb] || promptMap['pelny'] }
-            ]
-          }]
+          message: promptMap[tryb] || promptMap['pelny'],
+          fileBase64: base64,
+          fileMediaType: mediaType
         })
       });
 
       const data = await resp.json();
-      let txt = '';
-      if (data.content && data.content[0] && data.content[0].text) {
-        txt = data.content[0].text;
-      } else {
-        throw new Error(data.error?.message || JSON.stringify(data.error) || 'Brak odpowiedzi AI');
+      if (!resp.ok) {
+        throw new Error(data.error || data.message || ('HTTP ' + resp.status));
       }
+
+      // Proxy może zwracać wynik pod różnymi kluczami zależnie od wersji — sprawdzamy po kolei.
+      let txt = data.reply || data.message || data.text
+        || (data.content && data.content[0] && data.content[0].text)
+        || null;
+
+      if (!txt) {
+        throw new Error('Nierozpoznany format odpowiedzi proxy: ' + JSON.stringify(data).slice(0, 200));
+      }
+
       resultBox.value = txt;
       setStatus('✓ Gotowe — ' + trybLabels[tryb], 'ok');
       addHistory(txt, trybLabels[tryb]);
@@ -267,18 +238,6 @@ document.addEventListener('paste', (e) => {
     if (item.type.startsWith('image/')) { processImage(item.getAsFile()); return; }
   }
 });
-
-function changeKey() {
-  const current = getApiKey();
-  const msg = current ? '🔑 Zmień klucz API Anthropic:\n(obecny: ' + current.substring(0,12) + '...)' : '🔑 Wpisz klucz API Anthropic:';
-  const key = prompt(msg + '\n\nKlucz zostanie zapisany lokalnie w przeglądarce.');
-  if (key && key.startsWith('sk-ant-')) {
-    saveApiKey(key.trim());
-    setStatus('✓ Klucz API zapisany', 'ok');
-  } else if (key) {
-    alert('❌ Nieprawidłowy klucz.');
-  }
-}
 
 function copyText() {
   if (!resultBox.value.trim()) return;
