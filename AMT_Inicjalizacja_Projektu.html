@@ -210,6 +210,35 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:#f3f2
     </div>
 
     <div class="card">
+      <div class="sl">Adresy e-mail do automatycznej dekretacji korespondencji</div>
+      <div class="hint" style="margin-bottom:14px">Maile z tych adresów będą automatycznie kojarzone z tym projektem w module Inbox Zero — po jednym adresie w linii. Pole można zostawić puste i uzupełnić później.</div>
+      <div class="row2">
+        <div class="f" style="margin-bottom:14px">
+          <label>Zleceniodawca</label>
+          <textarea id="fAdresyZleceniodawca" style="width:100%;font-size:13px;border:1px solid #8a8886;border-radius:2px;padding:8px 10px;color:#323130;resize:vertical;height:70px" placeholder="jeden@adres.pl&#10;drugi@adres.pl"></textarea>
+        </div>
+        <div class="f" style="margin-bottom:14px">
+          <label>Inwestor</label>
+          <textarea id="fAdresyInwestor" style="width:100%;font-size:13px;border:1px solid #8a8886;border-radius:2px;padding:8px 10px;color:#323130;resize:vertical;height:70px" placeholder="jeden@adres.pl&#10;drugi@adres.pl"></textarea>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="f" style="margin-bottom:14px">
+          <label>Gestorzy sieci</label>
+          <textarea id="fAdresyGestorzy" style="width:100%;font-size:13px;border:1px solid #8a8886;border-radius:2px;padding:8px 10px;color:#323130;resize:vertical;height:70px" placeholder="jeden@adres.pl&#10;drugi@adres.pl"></textarea>
+        </div>
+        <div class="f" style="margin-bottom:14px">
+          <label>Urzędy / instytucje</label>
+          <textarea id="fAdresyUrzedy" style="width:100%;font-size:13px;border:1px solid #8a8886;border-radius:2px;padding:8px 10px;color:#323130;resize:vertical;height:70px" placeholder="jeden@adres.pl&#10;drugi@adres.pl"></textarea>
+        </div>
+      </div>
+      <div class="f" style="margin-bottom:0">
+        <label>Inne</label>
+        <textarea id="fAdresyInne" style="width:100%;font-size:13px;border:1px solid #8a8886;border-radius:2px;padding:8px 10px;color:#323130;resize:vertical;height:70px" placeholder="jeden@adres.pl&#10;drugi@adres.pl"></textarea>
+      </div>
+    </div>
+
+    <div class="card">
       <div class="sl" id="klInwSl">Klient / Inwestor</div>
       <div class="f" style="margin-bottom:14px;padding:10px 12px;background:#f3f2f1;border-radius:2px">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:400">
@@ -1381,6 +1410,11 @@ async function submitForm() {
     if (v('fDzialka').trim())  fields['Nrdzia_x0142_ki'] = v('fDzialka').trim();
     if (v('fNazwaInw').trim()) fields.Nazwainwestycji    = v('fNazwaInw').trim();
     if (document.getElementById('fZlecajacyInny').checked && nazwaZlecajacego()) fields.Zlecajacy = nazwaZlecajacego();
+    if (v('fAdresyZleceniodawca').trim()) fields.Adresy_Zleceniodawca = v('fAdresyZleceniodawca').trim();
+    if (v('fAdresyInwestor').trim())      fields.Adresy_Inwestor      = v('fAdresyInwestor').trim();
+    if (v('fAdresyGestorzy').trim())      fields.Adresy_Gestorzy      = v('fAdresyGestorzy').trim();
+    if (v('fAdresyUrzedy').trim())        fields.Adresy_Urzedy        = v('fAdresyUrzedy').trim();
+    if (v('fAdresyInne').trim())          fields.Adresy_Inne          = v('fAdresyInne').trim();
     // Pola Hyperlink pomijamy przy tworzeniu — Graph API wymaga specjalnego formatu
     // Linki trafiają do emaila i można je uzupełnić ręcznie w SharePoint
     // Dodaj role do fields
