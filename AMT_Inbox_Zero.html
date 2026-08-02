@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pl" xmlns:mso="urn:schemas-microsoft-com:office:office" xmlns:msdt="uuid:C2F41010-65B3-11d1-A29F-00AA00C14882">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>AMT Systems — Inbox Zero</title>
+<script src="msal-browser.min.js" onerror="console.warn('MSAL local load failed')"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', sans-serif; font-size: 14px; background: #f3f2f1; color: #323130; min-height: 100vh; }
+.header { background: #0078d4; color: white; padding: 0 24px; height: 48px; display: flex; align-items: center; justify-content: space-between; }
+.header-title { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 12px; }
+.header-user { font-size: 13px; display: flex; align-items: center; gap: 10px; }
+.avatar { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px; }
+.main { max-width: 760px; margin: 24px auto; padding: 0 16px 60px; }
+.login-screen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 24px; }
+.btn { border: none; border-radius: 4px; padding: 8px 16px; font-size: 14px; cursor: pointer; font-family: inherit; }
+.btn-primary { background: #0078d4; color: white; }
+.btn-primary:hover { background: #106ebe; }
+.btn-danger { background: #f3f2f1; color: #a4262c; border: 1px solid #edebe9; }
+.btn-danger:hover { background: #fde7e9; }
+.summary-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.summary-bar h1 { font-size: 18px; font-weight: 600; }
+.summary-bar .count { font-size: 13px; color: #605e5c; }
+.empty-state { text-align: center; padding: 80px 20px; color: #605e5c; }
+.empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+.group { background: white; border: 1px solid #edebe9; border-radius: 6px; margin-bottom: 16px; overflow: hidden; }
+.group-header { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: #faf9f8; border-bottom: 1px solid #edebe9; }
+.group-avatar { width: 32px; height: 32px; border-radius: 50%; background: #e6f1fb; color: #0078d4; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px; flex-shrink: 0; }
+.group-title { font-weight: 600; font-size: 14px; }
+.group-sub { font-size: 12px; color: #605e5c; }
+.mail-card { padding: 14px 16px; border-bottom: 1px solid #f3f2f1; }
+.mail-card:last-child { border-bottom: none; }
+.mail-subject { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+.mail-summary { font-size: 13px; color: #605e5c; margin-bottom: 10px; line-height: 1.5; }
+.mail-meta { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #605e5c; margin-bottom: 10px; flex-wrap: wrap; }
+.badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+.badge-high { background: #eaf3de; color: #27500a; }
+.badge-mid { background: #faeeda; color: #633806; }
+.badge-none { background: #fceeee; color: #a4262c; }
+.project-select { width: 100%; margin-bottom: 10px; padding: 6px 8px; border: 1px solid #d1d1d1; border-radius: 4px; font-size: 13px; font-family: inherit; }
+.actions { display: flex; gap: 8px; }
+.actions button { flex: 1; }
+.loading { text-align: center; padding: 60px; color: #605e5c; }
+.error-box { background: #fceeee; border: 1px solid #f7c1c1; color: #a4262c; padding: 12px 16px; border-radius: 4px; margin-bottom: 16px; font-size: 13px; }
+</style>
+
+<!--[if gte mso 9]><xml>
+<mso:CustomDocumentProperties>
+<mso:_ApprovalStatus msdt:dt="string">0</mso:_ApprovalStatus>
+<mso:_ApprovalAssignedTo msdt:dt="string"></mso:_ApprovalAssignedTo>
+<mso:_ApprovalRespondedBy msdt:dt="string"></mso:_ApprovalRespondedBy>
+</mso:CustomDocumentProperties>
+</xml><![endif]-->
+</head>
+<body>
+<div id="app">
+
+  <div class="login-screen" id="loginScreen">
+    <div style="font-size:40px;margin-bottom:8px;">📥</div>
+    <div style="font-size:18px;font-weight:600;margin-bottom:8px;">Inbox Zero</div>
+    <div style="color:#605e5c;margin-bottom:32px;">Zaloguj się kontem Microsoft 365</div>
+    <button class="btn btn-primary" style="padding:12px 32px;font-size:16px;" onclick="signIn()">Zaloguj się przez Microsoft 365</button>
+  </div>
+
+  <div id="mainApp" style="display:none;">
+    <div class="header">
+      <div class="header-title">
+        <span style="font-weight:700;letter-spacing:0.3px;">AMT Systems</span>
+        <span style="opacity:0.5;font-weight:300;font-size:18px;">|</span>
+        <span>Inbox Zero</span>
+      </div>
+      <div class="header-user">
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;">
+          <span id="userName" style="font-size:13px;font-weight:600;line-height:1.2;"></span>
+          <button onclick="signOut()" style="background:none;border:none;color:rgba(255,255,255,0.65);font-size:11px;cursor:pointer;padding:0;text-decoration:underline;">Wyloguj</button>
+        </div>
+        <div class="avatar" id="userInitials">?</div>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="summary-bar">
+        <h1>Do dekretacji</h1>
+        <span class="count" id="countLabel"></span>
+      </div>
+      <div id="errorBox"></div>
+      <div id="listArea"><div class="loading">Ładowanie…</div></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// CONFIG — te same dane co reszta ekosystemu AMT
+// ============================================================
+const CLIENT_ID = '20b270f3-cac0-44b4-aa38-1ed8e7169ad3';
+const TENANT_ID = 'e0d401cd-2f0f-4797-8794-e4dea94010cc';
+const SITE_HOST = 'amtsystemspl.sharepoint.com:/sites/Zlecenia';
+const BUFOR_LIST_ID = '7ab2ab84-4bc6-4f6a-b6e2-4ad2b26d2244'; // Bufor_Poczta — WERYFIKUJ przed pierwszym uruchomieniem
+const PROJEKTY_LIST_ID = '41270517-783F-40D8-8E36-2511993F9B37'; // Projekty 2025
+
+const msalInstance = new msal.PublicClientApplication({
+  auth: {
+    clientId: CLIENT_ID,
+    authority: `https://login.microsoftonline.com/${TENANT_ID}`,
+    redirectUri: 'https://agreeable-plant-0f7fa3903.7.azurestaticapps.net/AMT_Inbox_Zero.html'
+  },
+  cache: { cacheLocation: 'sessionStorage' }
+});
+const SCOPES = ['Sites.ReadWrite.All', 'User.Read'];
+
+let siteId = null;
+let projektyMap = {};   // id -> nazwa
+let projektyList = [];  // [{id, nazwa}] tylko aktywne (Archiwum != Tak)
+let mailItems = [];
+
+// ============================================================
+// AUTH — ten sam wzorzec co AMT_Rejestr_Korespondencji.html
+// ============================================================
+async function initApp() {
+  await msalInstance.initialize();
+  await msalInstance.handleRedirectPromise();
+  const accounts = msalInstance.getAllAccounts();
+  if (accounts.length > 0) {
+    setUser(accounts[0]);
+    showMainApp();
+  } else {
+    document.getElementById('loginScreen').style.display = 'flex';
+  }
+}
+function setUser(acc) {
+  const name = acc.name || acc.username;
+  document.getElementById('userName').textContent = name;
+  const parts = name.trim().split(' ');
+  const ini = parts.length >= 2 ? parts[0][0] + parts[parts.length - 1][0] : name.substring(0, 2);
+  document.getElementById('userInitials').textContent = ini.toUpperCase();
+}
+async function getToken() {
+  const acc = msalInstance.getAllAccounts()[0];
+  try { return (await msalInstance.acquireTokenSilent({ scopes: SCOPES, account: acc })).accessToken; }
+  catch { return (await msalInstance.acquireTokenSilent({ scopes: SCOPES })).accessToken; }
+}
+async function signIn() {
+  await msalInstance.initialize();
+  await msalInstance.loginRedirect({ scopes: SCOPES });
+}
+function signOut() {
+  msalInstance.logoutRedirect();
+}
+async function showMainApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+  await loadEverything();
+}
+
+// ============================================================
+// GRAPH
+// ============================================================
+async function gGet(url) {
+  const t = await getToken();
+  const r = await fetch('https://graph.microsoft.com/v1.0' + url, {
+    headers: { 'Authorization': 'Bearer ' + t, 'Prefer': 'HonorNonIndexedQueriesWarningMayFailRandomly' }
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function gPatchFields(itemId, fields) {
+  const t = await getToken();
+  const r = await fetch(`https://graph.microsoft.com/v1.0/sites/${siteId}/lists/${BUFOR_LIST_ID}/items/${itemId}/fields`, {
+    method: 'PATCH',
+    headers: { 'Authorization': 'Bearer ' + t, 'Content-Type': 'application/json' },
+    body: JSON.stringify(fields)
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+// ============================================================
+// ŁADOWANIE DANYCH
+// ============================================================
+async function loadEverything() {
+  const errBox = document.getElementById('errorBox');
+  errBox.innerHTML = '';
+  try {
+    const site = await gGet('/sites/' + SITE_HOST);
+    siteId = site.id;
+
+    const projRes = await gGet(`/sites/${siteId}/lists/${PROJEKTY_LIST_ID}/items?expand=fields(select=Title,Archiwum)&$top=999`);
+    projektyMap = {};
+    projektyList = [];
+    for (const it of projRes.value) {
+      const nazwa = it.fields.Title || '(bez nazwy)';
+      projektyMap[it.id] = nazwa;
+      const archiwum = (it.fields.Archiwum || '').toString().toLowerCase();
+      if (archiwum !== 'tak' && archiwum !== 'true') projektyList.push({ id: it.id, nazwa });
+    }
+    projektyList.sort((a, b) => a.nazwa.localeCompare(b.nazwa));
+
+    const filter = encodeURIComponent("fields/Status eq 'Do decyzji'");
+    const mailRes = await gGet(`/sites/${siteId}/lists/${BUFOR_LIST_ID}/items?expand=fields&$filter=${filter}&$top=200&$orderby=fields/DataOtrzymania desc`);
+    mailItems = mailRes.value;
+    renderList();
+  } catch (e) {
+    errBox.innerHTML = `<div class="error-box">Nie udało się załadować danych: ${escapeHtml(e.message).slice(0,300)}</div>`;
+    document.getElementById('listArea').innerHTML = '';
+  }
+}
+
+// ============================================================
+// RENDEROWANIE — grupowanie po nadawcy
+// ============================================================
+function renderList() {
+  const listArea = document.getElementById('listArea');
+  document.getElementById('countLabel').textContent = mailItems.length + ' mail(i) do dekretacji';
+
+  if (mailItems.length === 0) {
+    listArea.innerHTML = '<div class="empty-state"><div class="icon">✅</div>Skrzynka pusta — wszystko zdekretowane.</div>';
+    return;
+  }
+
+  const groups = {};
+  for (const item of mailItems) {
+    const key = item.fields.NazwaNadawcy || item.fields.Nadawca || 'Nieznany nadawca';
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(item);
+  }
+
+  let html = '';
+  for (const [nadawca, items] of Object.entries(groups)) {
+    const initials = nadawca.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
+    html += `<div class="group">
+      <div class="group-header">
+        <div class="group-avatar">${initials}</div>
+        <div>
+          <div class="group-title">${escapeHtml(nadawca)}</div>
+          <div class="group-sub">${items.length} mail(i) do dekretacji</div>
+        </div>
+      </div>`;
+    for (const item of items) html += renderMailCard(item);
+    html += `</div>`;
+  }
+  listArea.innerHTML = html;
+}
+
+function renderMailCard(item) {
+  const f = item.fields;
+  const id = item.id;
+  const temat = f.Title || '(bez tematu)';
+  const podsumowanie = f.PodsumowanieAI || '(brak podsumowania AI)';
+  const pewnosc = f.PewnoscDopasowania || 'Brak';
+  const badgeClass = pewnosc === 'Wysoka' ? 'badge-high' : (pewnosc === 'Srednia' || pewnosc === 'Średnia') ? 'badge-mid' : 'badge-none';
+  const sugerowanyId = f.SugerowanyProjektLookupId;
+  const liczbaZal = f.LiczbaZalacznikow || 0;
+
+  let selectHtml = '';
+  if (sugerowanyId && projektyMap[sugerowanyId]) {
+    // Jest jednoznaczne dopasowanie — pokaż jako tekst + link do zmiany
+    selectHtml = `<div class="mail-meta"><span>📁</span><span>${escapeHtml(projektyMap[sugerowanyId])}</span></div>`;
+  } else {
+    // Brak dopasowania — dropdown do ręcznego wyboru
+    let options = '<option value="">— wybierz projekt —</option>';
+    for (const p of projektyList) options += `<option value="${p.id}">${escapeHtml(p.nazwa)}</option>`;
+    selectHtml = `<select class="project-select" id="sel-${id}">${options}</select>`;
+  }
+
+  return `<div class="mail-card">
+    <div class="mail-subject">${escapeHtml(temat)}</div>
+    <div class="mail-summary">${escapeHtml(podsumowanie)}</div>
+    <div class="mail-meta">
+      <span class="badge ${badgeClass}">${escapeHtml(pewnosc === 'Brak' ? 'Brak dopasowania' : pewnosc + ' pewność')}</span>
+      ${liczbaZal > 0 ? `<span>📎 ${liczbaZal} zał.</span>` : ''}
+    </div>
+    ${selectHtml}
+    <div class="actions">
+      <button class="btn btn-primary" onclick="zatwierdz('${id}')">Zatwierdź</button>
+      <button class="btn btn-danger" onclick="odrzuc('${id}')">Odrzuć</button>
+    </div>
+  </div>`;
+}
+
+// ============================================================
+// AKCJE
+// ============================================================
+async function zatwierdz(itemId) {
+  const sel = document.getElementById('sel-' + itemId);
+  const fields = { Status: 'Zatwierdzony' };
+  if (sel) {
+    if (!sel.value) { alert('Wybierz projekt przed zatwierdzeniem.'); return; }
+    fields.SugerowanyProjektLookupId = parseInt(sel.value, 10);
+  }
+  await wykonajAkcje(itemId, fields);
+}
+async function odrzuc(itemId) {
+  await wykonajAkcje(itemId, { Status: 'Odrzucony' });
+}
+async function wykonajAkcje(itemId, fields) {
+  const errBox = document.getElementById('errorBox');
+  try {
+    await gPatchFields(itemId, fields);
+    mailItems = mailItems.filter(i => i.id !== itemId);
+    renderList();
+  } catch (e) {
+    errBox.innerHTML = `<div class="error-box">Nie udało się zapisać zmiany: ${escapeHtml(e.message).slice(0,300)}</div>`;
+  }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+window.addEventListener('DOMContentLoaded', initApp);
+</script>
+</body>
+</html>
