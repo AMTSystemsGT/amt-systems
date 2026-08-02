@@ -271,7 +271,7 @@ function renderMailCard(item) {
     <div class="mail-summary">${escapeHtml(podsumowanie)}</div>
     <div class="mail-meta">
       <span class="badge ${badgeClass}">${escapeHtml(pewnosc === 'Brak' ? 'Brak dopasowania' : pewnosc + ' pewność')}</span>
-      ${liczbaZal > 0 ? `<span>📎 ${liczbaZal} zał.</span>` : ''}
+      <span>📎 ${liczbaZal} zał.</span>
     </div>
     ${selectHtml}
     <div class="actions">
