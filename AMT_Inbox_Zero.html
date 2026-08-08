@@ -256,6 +256,13 @@ function renderMailCard(item) {
   const sugerowanyId = f.SugerowanyProjektLookupId;
   const liczbaZal = f.LiczbaZalacznikow || 0;
   const skrzynka = f.SkrzynkaWlasciciel || '';
+  let dataLabel = '';
+  if (f.DataOtrzymania) {
+    try {
+      const d = new Date(f.DataOtrzymania);
+      dataLabel = d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {}
+  }
 
   let selectHtml = '';
   if (sugerowanyId && projektyMap[sugerowanyId]) {
@@ -275,6 +282,7 @@ function renderMailCard(item) {
       <span class="badge ${badgeClass}">${escapeHtml(pewnosc === 'Brak' ? 'Brak dopasowania' : pewnosc + ' pewność')}</span>
       <span>📎 ${liczbaZal} zał.</span>
       ${skrzynka ? `<span>📥 skrzynka: ${escapeHtml(skrzynka)}</span>` : ''}
+      ${dataLabel ? `<span>🗓️ ${escapeHtml(dataLabel)}</span>` : ''}
     </div>
     ${selectHtml}
     <div class="actions">
