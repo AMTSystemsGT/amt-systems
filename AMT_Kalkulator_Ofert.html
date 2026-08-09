@@ -22,6 +22,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;color:var(--tx);
 .topbar{background:#fff;border-bottom:1px solid var(--br);padding:0 20px;height:44px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
 .topbar-l{display:flex;align-items:center;gap:10px}
 .topbar-logo{font-size:15px;font-weight:700;color:var(--ac);letter-spacing:-.3px}
+#nav-dashboard:hover{text-decoration:underline;opacity:0.85}
 .topbar-ver{font-size:10px;background:var(--bg2);color:var(--tx3);border-radius:10px;padding:2px 7px;font-weight:600}
 .topbar-r{display:flex;align-items:center;gap:8px}
 #topSt{font-size:11px;color:var(--tx3);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -210,7 +211,7 @@ textarea{resize:vertical;line-height:1.6}
 <!-- TOPBAR -->
 <div class="topbar">
   <div class="topbar-l">
-    <div class="topbar-logo">AMT Systems</div>
+    <a id="nav-dashboard" class="topbar-logo" href="AMT_Dashboard.html" title="Powrót do Dashboardu" style="text-decoration:none;">AMT Systems</a>
     <div class="topbar-ver">Project Engine v3.0</div>
     <span id="topSt"></span>
   </div>
@@ -1842,6 +1843,15 @@ liveCalc = function() {
 
   // Kalkulacja przy starcie
   liveCalc();
+})();
+</script>
+<script>
+// Link "AMT Systems" w nagłówku -> powrót do Dashboardu (spójny z logiką w AMT_Dashboard.html)
+(function () {
+  var link = document.getElementById('nav-dashboard');
+  if (link && location.hostname === 'localhost') {
+    link.href = 'http://localhost:8765/AMT_Dashboard.html';
+  }
 })();
 </script>
 </body>

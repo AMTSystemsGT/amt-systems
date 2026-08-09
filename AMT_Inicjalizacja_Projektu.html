@@ -11,6 +11,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:#f3f2
 .topbar{background:#0078d4;color:#fff;padding:0 24px;height:44px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
 .topbar-l{display:flex;align-items:center;gap:10px}
 .topbar-title{font-size:14px;font-weight:600}
+#nav-dashboard:hover{text-decoration:underline;opacity:0.9}
 .topbar-sub{font-size:11px;opacity:.65}
 .topbar-r{display:flex;align-items:center;gap:10px;font-size:12px}
 .av{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex-shrink:0}
@@ -109,7 +110,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:#f3f2
 
 <div class="topbar">
   <div class="topbar-l">
-    <span class="topbar-title">AMT Systems</span>
+    <a id="nav-dashboard" class="topbar-title" href="AMT_Dashboard.html" title="Powrót do Dashboardu" style="color:inherit;text-decoration:none;">AMT Systems</a>
     <span class="topbar-sub">| Nowy projekt</span>
   </div>
   <div class="topbar-r">
@@ -2152,6 +2153,15 @@ async function saveToListaZarzadcza(t, nrZad, siteId) {
 
 init();
 }
+</script>
+<script>
+// Link "AMT Systems" w nagłówku -> powrót do Dashboardu (spójny z logiką w AMT_Dashboard.html)
+(function () {
+  var link = document.getElementById('nav-dashboard');
+  if (link && location.hostname === 'localhost') {
+    link.href = 'http://localhost:8765/AMT_Dashboard.html';
+  }
+})();
 </script>
 </body>
 </html>
