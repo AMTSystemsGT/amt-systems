@@ -11,7 +11,6 @@
 body { font-family: 'Segoe UI', sans-serif; font-size: 14px; background: #f3f2f1; color: #323130; min-height: 100vh; }
 .header { background: #0078d4; color: white; padding: 0 24px; height: 48px; display: flex; align-items: center; justify-content: space-between; }
 .header-title { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 12px; }
-#nav-dashboard:hover { text-decoration: underline; opacity: 0.9; }
 .header-user { font-size: 13px; display: flex; align-items: center; gap: 10px; }
 .avatar { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px; }
 .main { max-width: 760px; margin: 24px auto; padding: 0 16px 60px; }
@@ -69,7 +68,7 @@ body { font-family: 'Segoe UI', sans-serif; font-size: 14px; background: #f3f2f1
   <div id="mainApp" style="display:none;">
     <div class="header">
       <div class="header-title">
-        <a id="nav-dashboard" href="AMT_Dashboard.html" title="Powrót do Dashboardu" style="font-weight:700;letter-spacing:0.3px;color:inherit;text-decoration:none;">AMT Systems</a>
+        <span style="font-weight:700;letter-spacing:0.3px;">AMT Systems</span>
         <span style="opacity:0.5;font-weight:300;font-size:18px;">|</span>
         <span>Inbox Zero</span>
       </div>
@@ -265,16 +264,20 @@ function renderMailCard(item) {
     } catch (e) {}
   }
 
-  let selectHtml = '';
-  if (sugerowanyId && projektyMap[sugerowanyId]) {
-    // Jest jednoznaczne dopasowanie — pokaż jako tekst + link do zmiany
-    selectHtml = `<div class="mail-meta"><span>📁</span><span>${escapeHtml(projektyMap[sugerowanyId])}</span></div>`;
-  } else {
-    // Brak dopasowania — dropdown do ręcznego wyboru
-    let options = '<option value="">— wybierz projekt —</option>';
-    for (const p of projektyList) options += `<option value="${p.id}">${escapeHtml(p.nazwa)}</option>`;
-    selectHtml = `<select class="project-select" id="sel-${id}">${options}</select>`;
+  // Zawsze pokaż edytowalny dropdown — jeśli AI ma sugestię, ustaw ją jako domyślnie
+  // wybraną opcję, ale pozwól ją zmienić przed zatwierdzeniem (korekta błędnego dopasowania).
+  let options = '<option value="">— wybierz projekt —</option>';
+  for (const p of projektyList) {
+    const sel = (sugerowanyId && String(sugerowanyId) === String(p.id)) ? ' selected' : '';
+    options += `<option value="${p.id}"${sel}>${escapeHtml(p.nazwa)}</option>`;
   }
+  // Jeśli sugerowany projekt jest zarchiwizowany (nie ma go w projektyList), dodaj go osobno,
+  // żeby dropdown i tak pokazywał aktualne dopasowanie zamiast cichego przeskoczenia na puste.
+  let sugerowanyPozaLista = sugerowanyId && !projektyList.some(p => String(p.id) === String(sugerowanyId));
+  if (sugerowanyPozaLista && projektyMap[sugerowanyId]) {
+    options += `<option value="${sugerowanyId}" selected>${escapeHtml(projektyMap[sugerowanyId])} (zarchiwizowany)</option>`;
+  }
+  const selectHtml = `<div class="mail-meta"><span>📁</span></div><select class="project-select" id="sel-${id}">${options}</select>`;
 
   return `<div class="mail-card">
     <div class="mail-subject">${escapeHtml(temat)}</div>
@@ -324,14 +327,6 @@ function escapeHtml(s) {
 }
 
 window.addEventListener('DOMContentLoaded', initApp);
-
-// Link "AMT Systems" w nagłówku -> powrót do Dashboardu (spójny z logiką w AMT_Dashboard.html)
-(function () {
-  var link = document.getElementById('nav-dashboard');
-  if (link && location.hostname === 'localhost') {
-    link.href = 'http://localhost:8765/AMT_Dashboard.html';
-  }
-})();
 </script>
 </body>
 </html>
