@@ -526,13 +526,24 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:#f3f2
       <div class="row2" style="margin-bottom:12px">
         <div class="f" style="margin-bottom:0">
           <label>Wartość netto (zł) <span style="font-size:11px;color:#a19f9d">z oferty lub szacunkowa</span></label>
-          <input type="number" id="fWartoscNetto" min="0" step="100" placeholder="np. 4500" oninput="calcBrutto()">
+          <input type="number" id="fWartoscNetto" min="0" step="100" placeholder="np. 4500" oninput="calcBrutto();sprawdzZakresy()">
         </div>
         <div class="f" style="margin-bottom:0">
           <label>Wartość brutto (zł) <span style="font-size:11px;color:#a19f9d">wyliczana automatycznie</span></label>
           <input type="number" id="fWartoscBrutto" readonly style="background:#f3f2f1;color:#605e5c">
         </div>
       </div>
+      <div class="row2" style="margin-bottom:4px">
+        <div class="f" style="margin-bottom:0">
+          <label>Wartość zakresu SIECI — Grzegorz (zł) <span style="font-size:11px;color:#a19f9d">opcjonalnie</span></label>
+          <input type="number" id="fZakresSieci" min="0" step="100" placeholder="np. 18000" oninput="sprawdzZakresy()">
+        </div>
+        <div class="f" style="margin-bottom:0">
+          <label>Wartość zakresu INSTALACJE — Lidia (zł) <span style="font-size:11px;color:#a19f9d">opcjonalnie</span></label>
+          <input type="number" id="fZakresInstalacje" min="0" step="100" placeholder="np. 16000" oninput="sprawdzZakresy()">
+        </div>
+      </div>
+      <div id="zakresyHint" class="hint" style="margin-bottom:12px"></div>
       <div class="row2">
         <div class="f" style="margin-bottom:0">
           <label>Kwota zaliczki (zł) <span style="font-size:11px;color:#a19f9d">opcjonalnie</span></label>
@@ -1687,6 +1698,7 @@ async function submitForm() {
     // poniższą linię, żeby przywrócić automatyczne generowanie.
     // generatePelnomocnictwo(t, projSiteId, nrZad, rodzaj).catch(e => console.warn('pelno:', e));
     saveToListaZarzadcza(t, nrZad, siteId).catch(e => console.warn('zarządcza:', e));
+    saveWartoscZakresow(t, nrZad, siteId).catch(e => console.warn('wartosc zakresow:', e));
 
     // SUKCES
     document.getElementById('progressCard').style.display='none';
@@ -1974,8 +1986,9 @@ async function loadWzorce() {
 }
 
 function resetForm(){
-  ['fNr','fMiasto','fUlica','fDzialka','fNazwaInw','fKlSkr','klSearch','nkNazwa','nkNip','nkRegon','nkOsoba','nkEmail','teamInp','zlSearch','fInwUlica','fInwMiejscowosc','fInwKod']
+  ['fNr','fMiasto','fUlica','fDzialka','fNazwaInw','fKlSkr','klSearch','nkNazwa','nkNip','nkRegon','nkOsoba','nkEmail','teamInp','zlSearch','fInwUlica','fInwMiejscowosc','fInwKod','fZakresSieci','fZakresInstalacje']
     .forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('zakresyHint').textContent='';
   document.getElementById('fZlecajacyInny').checked=false;
   document.getElementById('zlecajacyBox').style.display='none';
   clearZlecajacy();
@@ -2165,6 +2178,26 @@ function calcBrutto() {
   document.getElementById('fWartoscBrutto').value = netto > 0 ? Math.round(netto * 1.23) : '';
 }
 
+function sprawdzZakresy() {
+  const netto  = parseFloat(document.getElementById('fWartoscNetto').value)||0;
+  const sieci  = parseFloat(document.getElementById('fZakresSieci').value)||0;
+  const instal = parseFloat(document.getElementById('fZakresInstalacje').value)||0;
+  const suma   = sieci + instal;
+  const hint   = document.getElementById('zakresyHint');
+  if (suma === 0) { hint.textContent = ''; hint.style.color = ''; return; }
+  if (netto > 0 && suma > netto) {
+    hint.textContent = `⚠ Suma zakresów (${suma.toLocaleString('pl-PL')} zł) przekracza wartość netto kontraktu (${netto.toLocaleString('pl-PL')} zł) — sprawdź, czy to na pewno poprawne kwoty.`;
+    hint.style.color = '#a4262c';
+  } else if (netto > 0) {
+    const naKoszty = netto - suma;
+    hint.textContent = `Suma zakresów: ${suma.toLocaleString('pl-PL')} zł. Reszta kontraktu (${naKoszty.toLocaleString('pl-PL')} zł) — na koszty projektowe i narzut firmy.`;
+    hint.style.color = '#605e5c';
+  } else {
+    hint.textContent = `Suma zakresów: ${suma.toLocaleString('pl-PL')} zł.`;
+    hint.style.color = '#605e5c';
+  }
+}
+
 async function saveToListaZarzadcza(t, nrZad, siteId) {
   const netto    = parseFloat(document.getElementById('fWartoscNetto').value)||0;
   const brutto   = Math.round(netto * 1.23);
@@ -2195,6 +2228,38 @@ async function saveToListaZarzadcza(t, nrZad, siteId) {
     console.log('Lista zarządcza: zapisano', nrZad);
   } catch(e) {
     console.warn('Lista zarządcza — błąd zapisu:', e.message);
+    // Nie przerywamy inicjalizacji
+  }
+}
+
+// Zapisuje wartosc zakresow (SIECI - Grzegorz, INSTALACJE - Lidia) do listy
+// Wartosc_Zakresow_Osoba - jeden wpis na osobe, tylko jesli podano niezerowa
+// wartosc (projekt czysto SIECI nie tworzy pustego wpisu dla Lidii, i odwrotnie).
+async function saveWartoscZakresow(t, nrZad, siteId) {
+  const sieci  = parseFloat(document.getElementById('fZakresSieci').value)||0;
+  const instal = parseFloat(document.getElementById('fZakresInstalacje').value)||0;
+  if (sieci <= 0 && instal <= 0) return; // nic do zapisania
+
+  try {
+    const listsR = await fetch(`https://graph.microsoft.com/v1.0/sites/${siteId}/lists?$select=id,name,displayName`, {headers:{Authorization:`Bearer ${t}`}});
+    const listsData = await listsR.json();
+    const lista = (listsData.value||[]).find(l => l.name === 'Wartosc_Zakresow_Osoba' || l.displayName === 'Wartosc_Zakresow_Osoba');
+    if (!lista) { console.warn('Nie znaleziono listy Wartosc_Zakresow_Osoba'); return; }
+
+    const wpisy = [];
+    if (sieci  > 0) wpisy.push({ Title: nrZad, NumerProjektu: nrZad, Osoba: 'Grzegorz', Branza: 'SIECI',       WartoscZakresu: sieci  });
+    if (instal > 0) wpisy.push({ Title: nrZad, NumerProjektu: nrZad, Osoba: 'Lidia',     Branza: 'INSTALACJE', WartoscZakresu: instal });
+
+    for (const fields of wpisy) {
+      await fetch(`https://graph.microsoft.com/v1.0/sites/${siteId}/lists/${lista.id}/items`, {
+        method:'POST',
+        headers:{Authorization:`Bearer ${t}`,'Content-Type':'application/json'},
+        body: JSON.stringify({fields})
+      });
+    }
+    console.log('Wartosc_Zakresow_Osoba: zapisano', wpisy.length, 'wpis(y) dla', nrZad);
+  } catch(e) {
+    console.warn('Wartosc_Zakresow_Osoba — błąd zapisu:', e.message);
     // Nie przerywamy inicjalizacji
   }
 }
