@@ -320,10 +320,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:#f3f2
         </div>
         <div id="klDd" class="s-dd"></div>
         <div id="klNowyBox" style="display:none;margin-top:8px;padding:10px 12px;background:#fff4e5;border:1px solid #f0c060;border-radius:2px">
-          <div style="font-size:12px;margin-bottom:8px">Nie znaleziono w bazie — jak potraktować "<strong id="klNowaNazwa"></strong>"?</div>
+          <div style="font-size:12px;margin-bottom:8px">Nie znaleziono w bazie — "<strong id="klNowaNazwa"></strong>" zostanie dodany jako nowy klient.</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button type="button" onclick="uzyjKlientaJednorazowo()" style="padding:7px 14px;background:#fff;border:1px solid #8a8886;border-radius:2px;font-size:12px;cursor:pointer;font-family:inherit">🕐 Użyj tylko w tym projekcie</button>
-            <button type="button" onclick="pokazDodajKlientaNaStale()" style="padding:7px 14px;background:#107c10;color:#fff;border:none;border-radius:2px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">💾 Zapisz na stałe do bazy klientów</button>
+            <button type="button" onclick="pokazDodajKlientaNaStale()" style="padding:7px 14px;background:#107c10;color:#fff;border:none;border-radius:2px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">➕ Dodaj nowego klienta do bazy</button>
           </div>
         </div>
         <div id="klSel" class="kl-sel">
@@ -696,6 +695,48 @@ async function tok() {
   }
 }
 
+// Osobny token dla SharePoint REST API (ensureuser) - inny zakres niz Graph
+async function tokSP() {
+  const spScope = `https://${CFG.spHost}/.default`;
+  try {
+    return (await msalInst.acquireTokenSilent({ scopes:[spScope], account:currentAcc })).accessToken;
+  } catch {
+    return (await msalInst.acquireTokenPopup({ scopes:[spScope] })).accessToken;
+  }
+}
+
+// Cache: email -> LookupId (zeby nie pytac SharePoint REST kilka razy o te sama osobe
+// w jednym zgloszeniu formularza - np. gdy ta sama osoba jest i Projektantem i Kierownikiem)
+const _lookupIdCache = {};
+
+// Zamienia email/UPN osoby na SharePoint LookupId (numer w ukrytej liscie uzytkownikow
+// danej witryny) - wymagany format do zapisu pol typu "Osoba lub grupa" przez Graph API.
+// Uzywa starszego SharePoint REST API (_api/web/ensureuser), bo Graph nie ma odpowiednika.
+async function resolveUserLookupId(email) {
+  if (!email) return null;
+  if (_lookupIdCache[email]) return _lookupIdCache[email];
+  try {
+    const tSp = await tokSP();
+    const r = await fetch(`https://${CFG.spHost}/${CFG.zlecenia}/_api/web/ensureuser`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${tSp}`,
+        Accept: 'application/json;odata=verbose',
+        'Content-Type': 'application/json;odata=verbose'
+      },
+      body: JSON.stringify({ logonName: email })
+    });
+    if (!r.ok) { console.warn('ensureuser nieudane dla', email, r.status); return null; }
+    const d = await r.json();
+    const id = d?.d?.Id;
+    if (id) { _lookupIdCache[email] = id; return id; }
+    return null;
+  } catch (e) {
+    console.warn('resolveUserLookupId blad:', email, e.message);
+    return null;
+  }
+}
+
 // ─── SHOW APP ─────────────────────────────────────────────────────────────────
 async function showApp() {
   document.getElementById('loginScreen').style.display = 'none';
@@ -820,26 +861,6 @@ function wypelnijAdresInwestora(ulica, miasto, kod) {
   document.getElementById('fInwKod').value = kod || '';
 }
 
-let klientJednorazowy = null; // nazwa (string) — gdy klient użyty tylko w tym projekcie, bez zapisu do bazy
-
-function uzyjKlientaJednorazowo() {
-  const nazwa = document.getElementById('klNowaNazwa').textContent;
-  selectedKlient = null; klientJednorazowy = nazwa;
-  document.getElementById('klNowyBox').style.display='none';
-  document.getElementById('klSearch').value='';
-  document.getElementById('klSelName').textContent=nazwa;
-  document.getElementById('klSelBadge').textContent='jednorazowo';
-  document.getElementById('klSel').style.display='flex';
-  if (!v('fKlSkr')) { document.getElementById('fKlSkr').value = ascii(nazwa.split(/[\s,]+/).pop()||'').substring(0,24); updateNr(); }
-  wypelnijAdresInwestora('','','');
-  // Klient jednorazowy nie ma rekordu w bazie — adres trzeba wpisać ręcznie tu, bo to jedyne
-  // miejsce, gdzie w ogóle zostanie zapisany (potrzebny do pism).
-  document.getElementById('fInwAdresWrap').style.display = '';
-  document.getElementById('inwAdresBadge').textContent = '✏️ Uzupełnij adres inwestora ręcznie poniżej (potrzebny do pism)';
-  document.getElementById('inwAdresBadge').style.color = '#8a4b00';
-  document.getElementById('inwAdresBadge').style.display = 'block';
-}
-
 function pokazDodajKlientaNaStale() {
   const nazwa = document.getElementById('klNowaNazwa').textContent;
   document.getElementById('klNowyBox').style.display='none';
@@ -847,7 +868,7 @@ function pokazDodajKlientaNaStale() {
 }
 
 function selectKlient(k) {
-  selectedKlient=k; klientJednorazowy=null;
+  selectedKlient=k;
   document.getElementById('klDd').style.display='none';
   document.getElementById('klNowyBox').style.display='none';
   document.getElementById('klSearch').value='';
@@ -1019,11 +1040,11 @@ function toggleZlSameAsInwestor() {
 }
 
 function nazwaKlienta() {
-  return (selectedKlient?.nazwa || klientJednorazowy || v('nkNazwa').trim() || '').trim();
+  return (selectedKlient?.nazwa || v('nkNazwa').trim() || '').trim();
 }
 
 function clearKlient() {
-  selectedKlient=null; klientJednorazowy=null;
+  selectedKlient=null;
   document.getElementById('klSel').style.display='none';
   document.getElementById('klSearch').value='';
   document.getElementById('nkBox').style.display='none';
@@ -1338,9 +1359,9 @@ function validate() {
   const nkVis=document.getElementById('nkBox').style.display!=='none';
   const nkVisible = document.getElementById('nkBox').style.display !== 'none';
   const klNowyVisible = document.getElementById('klNowyBox').style.display !== 'none';
-  if(!selectedKlient && !klientJednorazowy && nkVisible) errs.push('Kliknij "💾 Dodaj klienta do bazy" zanim przejdziesz dalej');
-  if(!selectedKlient && !klientJednorazowy && klNowyVisible) errs.push('Wybierz "Użyj tylko w tym projekcie" albo "Zapisz na stałe do bazy klientów"');
-  if(!selectedKlient && !klientJednorazowy && !nkVisible && !klNowyVisible) errs.push('Wybierz klienta z listy lub wyszukaj i dodaj nowego');
+  if(!selectedKlient && nkVisible) errs.push('Kliknij "💾 Dodaj klienta do bazy" zanim przejdziesz dalej');
+  if(!selectedKlient && klNowyVisible) errs.push('Kliknij "➕ Dodaj nowego klienta do bazy"');
+  if(!selectedKlient && !nkVisible && !klNowyVisible) errs.push('Wybierz klienta z listy lub wyszukaj i dodaj nowego');
   if(!multiRole.projektant.length) errs.push('Wybierz przynajmniej jednego projektanta');
   if(!selectedKoordynator) errs.push('Wybierz koordynatora');
   if(!selectedKierownik) errs.push('Wybierz kierownika projektu');
@@ -1405,7 +1426,12 @@ async function submitForm() {
     fields['Miejscowo_x015b__x0107_']    = v('fMiasto').trim();
     fields['Skr_x00f3_conanazwaklienta'] = v('fKlSkr').trim();
     const nazwaKlientaPelna = nazwaKlienta();
-    if (nazwaKlientaPelna) fields.Klient = nazwaKlientaPelna;
+    if (klientId) {
+      fields.KlientLookupId = klientId;
+    } else if (nazwaKlientaPelna) {
+      console.warn('Klient "' + nazwaKlientaPelna + '" nie ma ID z bazy (jednorazowy, niezapisany) -',
+                    'pole Klient (typ Odnosnik) NIE ZOSTANIE wypelnione - wymaga wpisu do bazy klientow.');
+    }
     fields['Numerporz_x0105_dkowy']      = String(parseInt(v('fNr'))).padStart(3,'0');
     if (v('fUlica').trim())    fields.Ulica_x002f_rejon  = v('fUlica').trim();
     if (v('fDzialka').trim())  fields['Nrdzia_x0142_ki'] = v('fDzialka').trim();
@@ -1416,11 +1442,33 @@ async function submitForm() {
     if (v('fAdresyGestorzy').trim())      fields.Adresy_Gestorzy      = v('fAdresyGestorzy').trim();
     if (v('fAdresyUrzedy').trim())        fields.Adresy_Urzedy        = v('fAdresyUrzedy').trim();
     if (v('fAdresyInne').trim())          fields.Adresy_Inne          = v('fAdresyInne').trim();
+
+    // Status projektu - kolumna "Status", typ Wybor, wartosci zgodne z opcjami w formularzu
+    fields.Status = v('fStatus');
+
+    // Role zespolu - kolumny typu "Osoba lub grupa" (Kierownik/Asystent/Projektant/Koordynator).
+    // Graph API wymaga LookupId z ukrytej listy uzytkownikow witryny, nie samego emaila -
+    // stad resolveUserLookupId() (wywoluje SharePoint REST ensureuser, oddzielny token).
+    // Jesli rozwiazanie sie nie uda dla ktorejs osoby (np. nigdy nie logowala sie do tej
+    // witryny), pole zostaje pominiete - nie przerywamy calej inicjalizacji z tego powodu.
+    const [kierownikId, projektantId, asystentId, koordynatorId] = await Promise.all([
+      selectedKierownik   ? resolveUserLookupId(selectedKierownik.mail)   : null,
+      selectedProjektant  ? resolveUserLookupId(selectedProjektant.mail)  : null,
+      selectedAsystent    ? resolveUserLookupId(selectedAsystent.mail)    : null,
+      selectedKoordynator ? resolveUserLookupId(selectedKoordynator.mail) : null,
+    ]);
+    if (kierownikId)   fields.KierownikLookupId   = kierownikId;
+    else if (selectedKierownik)   console.warn('Nie udalo sie rozwiazac Kierownika:', selectedKierownik.mail, '- pole pominiete');
+    if (projektantId)  fields.ProjektantLookupId  = projektantId;
+    else if (selectedProjektant)  console.warn('Nie udalo sie rozwiazac Projektanta:', selectedProjektant.mail, '- pole pominiete');
+    if (asystentId)     fields.AsystentLookupId    = asystentId;
+    else if (selectedAsystent)    console.warn('Nie udalo sie rozwiazac Asystenta:', selectedAsystent.mail, '- pole pominiete');
+    if (koordynatorId) fields.KoordynatorLookupId = koordynatorId;
+    else if (selectedKoordynator) console.warn('Nie udalo sie rozwiazac Koordynatora:', selectedKoordynator.mail, '- pole pominiete');
+
     // Pola Hyperlink pomijamy przy tworzeniu — Graph API wymaga specjalnego formatu
     // Linki trafiają do emaila i można je uzupełnić ręcznie w SharePoint
-    // Dodaj role do fields
-  // Role — pomijamy przy tworzeniu, wpisujemy ręcznie w SP lub przez PATCH po utworzeniu
-  console.log('SP fields:', JSON.stringify(fields));
+    console.log('SP fields:', JSON.stringify(fields));
   await fp(`${G}/sites/${siteId}/lists/${listProjId}/items`,t,{fields});
     subS('lst',nrZad); setS('lst','d');
 
@@ -1940,7 +1988,7 @@ function resetForm(){
   document.getElementById('inwAdresBadge').style.display='none';
   document.getElementById('fInwAdresWrap').style.display='';
   document.getElementById('formErr').style.display='none';
-  selectedKlient=null; klientJednorazowy=null; teamMembers=[]; renderChips(); updateNr();
+  selectedKlient=null; teamMembers=[]; renderChips(); updateNr();
   multiRole = { projektant: [], sprawdzajacy: [], asystent: [] };
   ['projektant','sprawdzajacy','asystent'].forEach(r=>renderMultiRoleChips(r));
   selectedKoordynator=null; ['koordynator','kierownik'].forEach(r=>clearRole(r));
