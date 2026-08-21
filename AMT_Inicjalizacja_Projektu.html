@@ -1468,7 +1468,7 @@ async function submitForm() {
       selectedAsystent    ? resolveUserLookupId(selectedAsystent.mail)    : null,
       selectedKoordynator ? resolveUserLookupId(selectedKoordynator.mail) : null,
     ]);
-    if (kierownikId)   fields.KierownikLookupId   = kierownikId;
+    if (kierownikId)   fields.KierownikOsobaLookupId = kierownikId;
     else if (selectedKierownik)   console.warn('Nie udalo sie rozwiazac Kierownika:', selectedKierownik.mail, '- pole pominiete');
     if (projektantId)  fields.ProjektantLookupId  = projektantId;
     else if (selectedProjektant)  console.warn('Nie udalo sie rozwiazac Projektanta:', selectedProjektant.mail, '- pole pominiete');
