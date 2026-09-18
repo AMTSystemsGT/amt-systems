@@ -3552,7 +3552,7 @@ async function rejestruj() {
         instytucjaNazwa: jedNazwa || instName,
         jednorazowyAdres: jedAdres,
         dotyczy:         opis,
-        temat:           '',
+        temat:           opis,
         fileName:        fileName,
         basePath:        basePath,
         driveId:         driveId,
@@ -3962,7 +3962,17 @@ async function otworzModalPismaWych(daneSprawa) {
     // Temat
     '<div style="margin-bottom:24px;">' +
     '<label style="font-size:12px;font-weight:600;color:#605e5c;display:block;margin-bottom:4px;">TEMAT</label>' +
-    '<input id="pw_temat" type="text" placeholder="Szczegółowy temat pisma" style="width:100%;box-sizing:border-box;padding:6px 10px;border:1px solid #8a8886;border-radius:2px;font-size:14px;font-family:inherit;"></div>' +
+    '<input id="pw_temat" type="text" value="' + xh(daneSprawa.temat||'') + '" placeholder="Szczegółowy temat pisma" style="width:100%;box-sizing:border-box;padding:6px 10px;border:1px solid #8a8886;border-radius:2px;font-size:14px;font-family:inherit;"></div>' +
+    // Treść pisma — opis + generowanie AI
+    '<div style="margin-bottom:24px;background:#f0f6ff;border:1px solid #c7e0f4;border-radius:2px;padding:12px 14px;">' +
+    '<label style="font-size:12px;font-weight:600;color:#605e5c;display:block;margin-bottom:4px;">✨ TREŚĆ PISMA — opisz o co chodzi, AI napisze gotowy tekst <span style="font-weight:400;">(opcjonalnie)</span></label>' +
+    '<textarea id="pw_opis_ai" rows="2" placeholder="np. proszę o uzgodnienie przyłącza wodociągowego do budynku, inwestycja koliduje z istniejącym gazociągiem, potrzebna zgoda na przełożenie" style="width:100%;box-sizing:border-box;padding:6px 10px;border:1px solid #8a8886;border-radius:2px;font-size:13px;font-family:inherit;resize:vertical;"></textarea>' +
+    '<button type="button" id="pw_btn_ai" style="margin-top:8px;padding:6px 14px;background:#0078d4;color:white;border:none;border-radius:2px;font-size:12px;font-weight:600;cursor:pointer;">✨ Wygeneruj treść (AI)</button>' +
+    '<span id="pw_ai_status" style="margin-left:10px;font-size:12px;color:#605e5c;"></span>' +
+    '<div id="pw_tresc_wrap" style="display:none;margin-top:10px;">' +
+    '<label style="font-size:12px;font-weight:600;color:#605e5c;display:block;margin-bottom:4px;">Wygenerowana treść — sprawdź i popraw przed wygenerowaniem pisma</label>' +
+    '<textarea id="pw_tresc" rows="6" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #8a8886;border-radius:2px;font-size:13px;font-family:inherit;resize:vertical;"></textarea>' +
+    '</div></div>' +
     // Pasek postępu
     '<div id="pw_status_box" style="display:none;margin-bottom:14px;">' +
     '<div id="pw_status_tekst" style="font-size:13px;color:#605e5c;margin-bottom:6px;">Przygotowywanie...</div>' +
@@ -3983,6 +3993,45 @@ async function otworzModalPismaWych(daneSprawa) {
   modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
   document.getElementById('zamknijPismoWych').onclick = function() { modal.remove(); };
   document.getElementById('pw_btn_anuluj').onclick    = function() { modal.remove(); };
+
+  document.getElementById('pw_btn_ai').onclick = async function() {
+    var opisRoboczy = document.getElementById('pw_opis_ai').value.trim();
+    if (!opisRoboczy) { alert('Opisz najpierw krótko, o co chodzi w piśmie.'); return; }
+    var statusEl = document.getElementById('pw_ai_status');
+    var btnAi    = document.getElementById('pw_btn_ai');
+    btnAi.disabled = true;
+    statusEl.textContent = '⏳ Generuję treść...';
+    try {
+      var adresatNazwa = daneSprawa.instytucjaNazwa || (document.getElementById('pw_adresat') ? document.getElementById('pw_adresat').textContent : '') || '';
+      var dotyczyVal = document.getElementById('pw_dotyczy').value.trim();
+      var tematVal   = document.getElementById('pw_temat').value.trim();
+      var PROXY_TRESC = 'https://amt-claude-proxy-gzg9bbg7gffja6gc.polandcentral-01.azurewebsites.net/api/claudeProxy';
+      var aiResp = await fetch(PROXY_TRESC, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: 'Napisz treść formalnego pisma (2-4 akapity, sam tekst merytoryczny, BEZ nagłówka, BEZ zwrotu grzecznościowego typu "Szanowni Państwo", BEZ zakończenia typu "Z poważaniem" — to już jest w szablonie).\n' +
+            'Adresat: ' + adresatNazwa + '\n' +
+            'Dotyczy: ' + dotyczyVal + '\n' +
+            'Temat: ' + tematVal + '\n' +
+            'Co ma zawierać pismo (opis autora): ' + opisRoboczy,
+          systemPrompt: 'Jesteś asystentem biura projektowego branży sanitarnej AMT Systems piszącym formalną korespondencję do urzędów, gestorów sieci i inwestorów (uzgodnienia, warunki techniczne, wnioski). Piszesz rzeczowo, formalnie, po polsku, bez zbędnych ozdobników. Odpowiadasz WYŁĄCZNIE treścią pisma — bez nagłówka, adresu, zwrotu grzecznościowego ani podpisu.'
+        })
+      });
+      var aiData = await aiResp.json();
+      if (aiData.success && aiData.raw) {
+        document.getElementById('pw_tresc').value = aiData.raw.trim();
+        document.getElementById('pw_tresc_wrap').style.display = 'block';
+        statusEl.textContent = '✓ Gotowe — sprawdź treść poniżej';
+      } else {
+        statusEl.textContent = '❌ ' + (aiData.error || 'AI nie zwróciło treści');
+      }
+    } catch(eAi) {
+      statusEl.textContent = '❌ Błąd: ' + eAi.message;
+    } finally {
+      btnAi.disabled = false;
+    }
+  };
 
   // Pobierz adres instytucji
   var podglad = document.getElementById('pw_adresat');
@@ -4045,6 +4094,8 @@ async function otworzModalPismaWych(daneSprawa) {
   document.getElementById('pw_btn_generuj').onclick = async function() {
     var dotyczy   = document.getElementById('pw_dotyczy').value.trim();
     var temat     = document.getElementById('pw_temat').value.trim();
+    var trescEl   = document.getElementById('pw_tresc');
+    var trescPisma = (trescEl && trescEl.value.trim()) || '';
     var znakInst  = document.getElementById('pw_odpowiedz').value.trim();
     var _selPrzych = document.getElementById('pw_pismo_przych');
     var _idxPrzych = _selPrzych ? parseInt(_selPrzych.value) : NaN;
@@ -4062,6 +4113,7 @@ async function otworzModalPismaWych(daneSprawa) {
       var wynik = await wykonajGenerowaniePisma(Object.assign({}, daneSprawa, {
         dotyczy: dotyczy,
         temat: temat,
+        trescPisma: trescPisma,
         pismoPrzychodzace: znakInst,
         pismoPrzychodzaceNazwa: odpNazwa,
         selProjekt: selProjekt
@@ -4138,6 +4190,7 @@ async function wykonajGenerowaniePisma(d) {
     'Pismo_przychodzace': d.pismoPrzychodzace || '',
     'Dotyczy_sprawy':     nazwaInwestycji || d.dotyczy || '',
     'Temat_sprawy':       d.temat             || '',
+    'Tresc_pisma':        d.trescPisma        || '',
     'Adresat_nazwa':      adresat.nazwa       || '',
     'Adresat_ulica':      adresUlica          || '',
     'Adresat_kodmiasto':  adresKodMiasto      || '',
@@ -4224,9 +4277,15 @@ function pwPodmienSdt(xml, pola) {
     var sdtEnd   = xml.indexOf('</w:sdt>', idx) + '</w:sdt>'.length;
     var block    = xml.substring(sdtStart, sdtEnd);
     block = block.replace(/<w:showingPlcHdr\/>\s*/g, '');
+    // Wielolinijkowe wartości (np. treść pisma z kilkoma akapitami z AI) — zamień enter na
+    // przełamanie wiersza w Wordzie (<w:br/>), zamiast wklejać wszystko jako jeden ciągły tekst.
+    // Celowo NIE dzielimy na nowe akapity (<w:p>) — nie wiadomo, czy pole w szablonie jest typu
+    // "Rich Text" (obsługuje wiele akapitów) czy "Plain Text" (tylko jedna linia); <w:br/> działa
+    // bezpiecznie w obu przypadkach, bez ryzyka uszkodzenia struktury dokumentu.
+    var valXml = xv(val).replace(/\n+/g, '</w:t></w:r><w:r><w:br/></w:r><w:r><w:t xml:space="preserve">');
     var done = false;
     block = block.replace(/(<w:t[^>]*>)[^<]*(<\/w:t>)/g, function(m, o, c) {
-      if (!done) { done = true; return o + xv(val) + c; }
+      if (!done) { done = true; return o + valXml + c; }
       return m;
     });
     xml = xml.substring(0, sdtStart) + block + xml.substring(sdtEnd);
