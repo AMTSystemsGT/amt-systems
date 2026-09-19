@@ -3558,6 +3558,7 @@ async function rejestruj() {
         driveId:         driveId,
         dataVal:         dataVal,
         typ:             typ,
+        zalacznikiNazwy: attFiles.map(f => f.name),
       });
       // Nie resetuj formularza automatycznie — użytkownik sam kliknie Wyczyść po wygenerowaniu pisma
       setTimeout(()=>{ document.getElementById('progressSteps').classList.remove('show'); btn.disabled=false; btn.textContent='Zarejestruj pismo'; }, 2000);
@@ -3973,6 +3974,11 @@ async function otworzModalPismaWych(daneSprawa) {
     '<label style="font-size:12px;font-weight:600;color:#605e5c;display:block;margin-bottom:4px;">Wygenerowana treść — sprawdź i popraw przed wygenerowaniem pisma</label>' +
     '<textarea id="pw_tresc" rows="6" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #8a8886;border-radius:2px;font-size:13px;font-family:inherit;resize:vertical;"></textarea>' +
     '</div></div>' +
+    // Lista załączników — edytowalna, jedna pozycja na linię
+    '<div style="margin-bottom:24px;">' +
+    '<label style="font-size:12px;font-weight:600;color:#605e5c;display:block;margin-bottom:4px;">ZAŁĄCZNIKI <span style="font-weight:400;">(jedna pozycja na linię — popraw nazwy plików na czytelne opisy)</span></label>' +
+    '<textarea id="pw_zalaczniki" rows="' + Math.max(2, (daneSprawa.zalacznikiNazwy||[]).length) + '" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #8a8886;border-radius:2px;font-size:13px;font-family:inherit;resize:vertical;">' + xh((daneSprawa.zalacznikiNazwy||[]).join('\n')) + '</textarea>' +
+    '</div>' +
     // Pasek postępu
     '<div id="pw_status_box" style="display:none;margin-bottom:14px;">' +
     '<div id="pw_status_tekst" style="font-size:13px;color:#605e5c;margin-bottom:6px;">Przygotowywanie...</div>' +
@@ -4096,6 +4102,8 @@ async function otworzModalPismaWych(daneSprawa) {
     var temat     = document.getElementById('pw_temat').value.trim();
     var trescEl   = document.getElementById('pw_tresc');
     var trescPisma = (trescEl && trescEl.value.trim()) || '';
+    var zalEl     = document.getElementById('pw_zalaczniki');
+    var zalacznikiLista = zalEl ? zalEl.value.split('\n').map(function(s){return s.trim();}).filter(Boolean) : [];
     var znakInst  = document.getElementById('pw_odpowiedz').value.trim();
     var _selPrzych = document.getElementById('pw_pismo_przych');
     var _idxPrzych = _selPrzych ? parseInt(_selPrzych.value) : NaN;
@@ -4114,6 +4122,7 @@ async function otworzModalPismaWych(daneSprawa) {
         dotyczy: dotyczy,
         temat: temat,
         trescPisma: trescPisma,
+        zalacznikiLista: zalacznikiLista,
         pismoPrzychodzace: znakInst,
         pismoPrzychodzaceNazwa: odpNazwa,
         selProjekt: selProjekt
@@ -4196,6 +4205,7 @@ async function wykonajGenerowaniePisma(d) {
     'Adresat_kodmiasto':  adresKodMiasto      || '',
   };
   docXml = pwPodmienSdt(docXml, pola);
+  docXml = pwWstawListe(docXml, 'Zalaczniki_lista', d.zalacznikiLista);
 
   // Jeśli brak znaku pisma przychodzącego — usuń wiersz "Dotyczy pisma" z tabeli
   if (!d.pismoPrzychodzace) {
@@ -4264,6 +4274,34 @@ async function pobierzAdresInstytucji(instytucjaId) {
   if (!resp.ok) throw new Error('Nie można pobrać danych instytucji');
   var data = await resp.json();
   return { nazwa: (data.fields && data.fields.Title) || '', adres: (data.fields && data.fields.Adres) || '' };
+}
+
+function pwWstawListe(xml, tag, pozycje) {
+  if (!pozycje || !pozycje.length) return xml;
+  var tagStr = '<w:tag w:val="' + tag + '"/>';
+  var idx = xml.indexOf(tagStr);
+  if (idx < 0) return xml;
+  var sdtStart = xml.lastIndexOf('<w:sdt>', idx);
+  var sdtEnd   = xml.indexOf('</w:sdt>', idx) + '</w:sdt>'.length;
+  var block    = xml.substring(sdtStart, sdtEnd);
+  // Znajdź wzorcowy akapit listy (jeden <w:p>...</w:p>) wewnątrz sdtContent
+  var contentStart = block.indexOf('<w:sdtContent>') + '<w:sdtContent>'.length;
+  var contentEnd   = block.indexOf('</w:sdtContent>');
+  var wzorzec      = block.substring(contentStart, contentEnd); // jeden <w:p>...</w:p>
+  // Wytnij treść placeholdera (pojedynczy <w:r>...</w:r>) - zastąpimy go realnym tekstem
+  var pTagEnd = wzorzec.indexOf('</w:pPr>') + '</w:pPr>'.length;
+  var pPr     = wzorzec.substring(0, pTagEnd);
+  var pClose  = '</w:p>';
+  var rPrMatch = wzorzec.match(/<w:rPr>[\s\S]*?<\/w:rPr>/);
+  var rPr = rPrMatch ? rPrMatch[0] : '';
+  var noweAkapity = pozycje.map(function(tekst, i) {
+    var unikalnyId = '5A' + String(i).padStart(6, '0');
+    var pPrUnik = pPr.replace(/w14:paraId="[0-9A-F]+"/, 'w14:paraId="' + unikalnyId + '"');
+    return pPrUnik + '<w:r>' + rPr + '<w:t xml:space="preserve">' + xv(tekst) + '</w:t></w:r>' + pClose;
+  }).join('');
+  var nowyBlock = block.substring(0, contentStart) + noweAkapity + block.substring(contentEnd);
+  nowyBlock = nowyBlock.replace(/<w:showingPlcHdr\/>\s*/g, '');
+  return xml.substring(0, sdtStart) + nowyBlock + xml.substring(sdtEnd);
 }
 
 function pwPodmienSdt(xml, pola) {
